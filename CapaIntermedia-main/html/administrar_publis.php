@@ -1,5 +1,41 @@
-<!DOCTYPE html>
+<?php
+session_start();
 
+// Conexión a la base de datos
+require_once '../BD/Connection/Connection.php';
+
+$displayName = 'Mi Perfil';
+$photoSrc = '../css/PlaceHolder3.png';
+
+if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
+    $uid = (int) $_SESSION['user_id'];
+    $stmt = $conn->prepare("SELECT Nombre, Foto FROM USUARIO WHERE ID_User = ?");
+    if ($stmt) {
+        $stmt->bind_param('i', $uid);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        if ($res && $res->num_rows === 1) {
+            $row = $res->fetch_assoc();
+            if (!empty($row['Nombre'])) {
+                $displayName = htmlspecialchars($row['Nombre']);
+            }
+            if (!empty($row['Foto'])) {
+                // Si la ruta es relativa, añadir prefijo; si es absoluta o URL, usarla tal cual
+                $foto = $row['Foto'];
+                if (strpos($foto, 'http') === 0 || strpos($foto, '/') === 0) {
+                    $photoSrc = $foto;
+                } else {
+                    $photoSrc = '../' . ltrim($foto, '/');
+                }
+            }
+        }
+        $stmt->close();
+    }
+}
+
+$conn->close();
+?>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="utf-8"/>
@@ -25,7 +61,6 @@
 .header-search{display:flex;gap:8px;align-items:center}
 .header-search input[type="search"]{padding:6px 10px;border-radius:999px;border:1px solid rgba(0,0,0,.15);min-width:220px}
 .header-search button{padding:6px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.15);background:#fff;cursor:pointer}
-/* Ensure profile bubble stands alone */
 .header-profile-link{display:inline-block;text-decoration:none}
 </style></head>
 <body>
@@ -38,9 +73,14 @@
 </div>
 <div>
 <h1>GolNet </h1>
-<!-- <div class="motto">Uniendo al mundo a través del fútbol</div> -->
 </div>
 </div><div class="header-center"><form action="#" class="header-search" method="GET"><input name="q" placeholder="Buscar..." type="search"/><button type="submit">Buscar</button></form></div>
+<?php if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])): ?>
+<div class="countdown">
+<a class="header-logout-icon-link" href="cerrar_sesion.php" title="Cerrar Sesión"><i class="fa-solid fa-right-from-bracket"></i></a>
+<a class="header-profile-link" href="mis_publicaciones.php"><div class="header-profile-mini"><img alt="Foto de perfil" src="<?php echo htmlspecialchars($photoSrc); ?>"/><span class="name"><?php echo htmlspecialchars($displayName); ?></span></div></a>
+</div>
+<?php endif; ?>
 </div>
 <button class="menu-toggle" id="menuToggle">
 <i class="fas fa-bars"></i>
@@ -61,15 +101,13 @@
 </div>
 </div>
 <ul>
-<li><a href="inicio.html"><i class="fas fa-home"></i> <span>Inicio</span></a></li>
-<li><a href="mis_publicaciones.html"><i class="fa-solid fa-user"></i> <span>Perfil</span></a></li>
-<li><a href="crear_publicacion.html"><i class="fa-solid fa-upload"></i> <span>Publicar</span></a></li>
-<!-- <li><a href="#"><i class="fas fa-cog"></i> <span>Configuración</span></a></li> -->
-<!-- Otros botones -->
-<li><a href="Iniciar_sesion.html"><i class="fa-solid fa-right-to-bracket"></i> <span>Iniciar Sesión</span></a></li>
-<li><a href="administrar_publis.html"><i class="fa-solid fa-user-tie"></i> <span>Administrar</span></a></li>
-<li><a href="mundiales.html"><i class="fas fa-trophy"></i> <span>Mundiales</span></a></li>
-<li><a href="categorías.html"><i class="fa-solid fa-tags"></i> <span>Categorías</span></a></li>
+<li><a href="inicio.php"><i class="fas fa-home"></i> <span>Inicio</span></a></li>
+<li><a href="mis_publicaciones.php"><i class="fa-solid fa-user"></i> <span>Perfil</span></a></li>
+<li><a href="crear_publicacion.php"><i class="fa-solid fa-upload"></i> <span>Publicar</span></a></li>
+<li><a href="Iniciar_sesion.php"><i class="fa-solid fa-right-to-bracket"></i> <span>Iniciar Sesión</span></a></li>
+<li><a href="administrar_publis.php"><i class="fa-solid fa-user-tie"></i> <span>Administrar</span></a></li>
+<li><a href="mundiales.php"><i class="fas fa-trophy"></i> <span>Mundiales</span></a></li>
+<li><a href="categorías.php"><i class="fa-solid fa-tags"></i> <span>Categorías</span></a></li>
 </ul>
 </aside>
 <!-- Contenido principal - Información del Mundial -->
@@ -273,16 +311,11 @@ document.addEventListener('DOMContentLoaded', function () {
 <div class="footer-links">
 <a href="#">Inicio</a>
 <a href="#">Noticias</a>
-<!-- <a href="#">Calendario</a>
-                    <a href="#">Estadios</a>
-                    <a href="#">Entradas</a> -->
 </div>
 </div>
 <div class="footer-section">
 <h3>Contacto</h3>
 <div class="footer-contact">
-<!-- <span><i class="fas fa-map-marker-alt"></i> FIFA Strasse 20, Zúrich, Suiza</span> -->
-<!-- Colocar links a portafolios y demas cosas del equipo -->
 <span><i class="fas fa-phone"></i> +52 123 456 789</span>
 <span><i class="fas fa-envelope"></i> alumnos.fcfm@placeholder.com</span>
 </div>

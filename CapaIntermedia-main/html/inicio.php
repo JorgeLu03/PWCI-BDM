@@ -1,3 +1,40 @@
+<?php
+session_start();
+
+// Conexión a la base de datos
+require_once '../BD/Connection/Connection.php';
+
+$displayName = 'Mi Perfil';
+$photoSrc = '../css/PlaceHolder3.png';
+
+if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
+    $uid = (int) $_SESSION['user_id'];
+    $stmt = $conn->prepare("SELECT Nombre, Foto FROM USUARIO WHERE ID_User = ?");
+    if ($stmt) {
+        $stmt->bind_param('i', $uid);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        if ($res && $res->num_rows === 1) {
+            $row = $res->fetch_assoc();
+            if (!empty($row['Nombre'])) {
+                $displayName = htmlspecialchars($row['Nombre']);
+            }
+            if (!empty($row['Foto'])) {
+                // Si la ruta es relativa, añadir prefijo; si es absoluta o URL, usarla tal cual
+                $foto = $row['Foto'];
+                if (strpos($foto, 'http') === 0 || strpos($foto, '/') === 0) {
+                    $photoSrc = $foto;
+                } else {
+                    $photoSrc = '../' . ltrim($foto, '/');
+                }
+            }
+        }
+        $stmt->close();
+    }
+}
+
+$conn->close();
+?>
 <!DOCTYPE html>
 
 <html lang="es">
@@ -40,6 +77,12 @@
 <!-- <div class="motto">Uniendo al mundo a través del fútbol</div> -->
 </div>
 </div><div class="header-center"><form action="#" class="header-search" method="GET"><input name="q" placeholder="Buscar..." type="search"/><button type="submit">Buscar</button></form></div>
+<?php if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])): ?>
+<div class="countdown">
+<a class="header-logout-icon-link" href="cerrar_sesion.php" title="Cerrar Sesión"><i class="fa-solid fa-right-from-bracket"></i></a>
+<a class="header-profile-link" href="mis_publicaciones.php"><div class="header-profile-mini"><img alt="Foto de perfil" src="<?php echo htmlspecialchars($photoSrc); ?>"/><span class="name"><?php echo htmlspecialchars($displayName); ?></span></div></a>
+</div>
+<?php endif; ?>
 </div>
 <button class="menu-toggle" id="menuToggle">
 <i class="fas fa-bars"></i>
@@ -60,15 +103,15 @@
 </div>
 </div>
 <ul>
-<li><a href="inicio.html"><i class="fas fa-home"></i> <span>Inicio</span></a></li>
-<li><a href="mis_publicaciones.html"><i class="fa-solid fa-user"></i> <span>Perfil</span></a></li>
-<li><a href="crear_publicacion.html"><i class="fa-solid fa-upload"></i> <span>Publicar</span></a></li>
+<li><a href="inicio.php"><i class="fas fa-home"></i> <span>Inicio</span></a></li>
+<li><a href="mis_publicaciones.php"><i class="fa-solid fa-user"></i> <span>Perfil</span></a></li>
+<li><a href="crear_publicacion.php"><i class="fa-solid fa-upload"></i> <span>Publicar</span></a></li>
 <!-- <li><a href="#"><i class="fas fa-cog"></i> <span>Configuración</span></a></li> -->
 <!-- Otros botones -->
 <li><a href="Iniciar_sesion.php"><i class="fa-solid fa-right-to-bracket"></i> <span>Iniciar Sesión</span></a></li>
-<li><a href="administrar_publis.html"><i class="fa-solid fa-user-tie"></i> <span>Administrar</span></a></li>
-<li><a href="mundiales.html"><i class="fas fa-trophy"></i> <span>Mundiales</span></a></li>
-<li><a href="categorías.html"><i class="fa-solid fa-tags"></i> <span>Categorías</span></a></li>
+<li><a href="administrar_publis.php"><i class="fa-solid fa-user-tie"></i> <span>Administrar</span></a></li>
+<li><a href="mundiales.php"><i class="fas fa-trophy"></i> <span>Mundiales</span></a></li>
+<li><a href="categorías.php"><i class="fa-solid fa-tags"></i> <span>Categorías</span></a></li>
 </ul>
 </aside>
 <!-- Contenido principal - Información del Mundial -->
@@ -83,7 +126,7 @@
     <section class="infografia" id="infografia">
         <div class="cards-grid">
             <!-- Ejemplo de Publicación como Tarjeta -->
-            <a class="card-link" data-comments="25" data-date="2024-05-21T10:00:00Z" data-likes="150" href="comentarios_publi.html">
+            <a class="card-link" data-comments="25" data-date="2024-05-21T10:00:00Z" data-likes="150" href="comentarios_publi.php">
                 <article class="card publication-card">
                     <div class="publication-card-media">
                         <img alt="Foto de la publicación" src="../css/PlaceHolder3.png"/>
@@ -95,7 +138,7 @@
                 </article>
             </a>
             <!-- Puedes añadir más publicaciones aquí siguiendo la misma estructura -->
-            <a class="card-link" data-comments="12" data-date="2024-05-20T18:30:00Z" data-likes="95" href="comentarios_publi.html">
+            <a class="card-link" data-comments="12" data-date="2024-05-20T18:30:00Z" data-likes="95" href="comentarios_publi.php">
                 <article class="card publication-card">
                     <div class="publication-card-media">
                         <img alt="Foto de la publicación" src="../css/PlaceHolder3.png"/>
@@ -106,7 +149,7 @@
                     </div>
                 </article>
             </a>
-            <a class="card-link" data-comments="48" data-date="2024-05-22T09:00:00Z" data-likes="210" href="comentarios_publi.html">
+            <a class="card-link" data-comments="48" data-date="2024-05-22T09:00:00Z" data-likes="210" href="comentarios_publi.php">
                 <article class="card publication-card">
                     <div class="publication-card-media">
                         <img alt="Foto de la publicación" src="../css/PlaceHolder3.png"/>

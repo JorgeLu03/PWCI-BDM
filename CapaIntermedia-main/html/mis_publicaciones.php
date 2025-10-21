@@ -1,10 +1,45 @@
+<?php
+session_start();
+
+// Conexión a la base de datos
+require_once '../BD/Connection/Connection.php';
+
+$displayName = 'Mi Perfil';
+$photoSrc = '../css/PlaceHolder3.png';
+
+if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
+    $uid = (int) $_SESSION['user_id'];
+    $stmt = $conn->prepare("SELECT Nombre, Foto FROM USUARIO WHERE ID_User = ?");
+    if ($stmt) {
+        $stmt->bind_param('i', $uid);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        if ($res && $res->num_rows === 1) {
+            $row = $res->fetch_assoc();
+            if (!empty($row['Nombre'])) {
+                $displayName = htmlspecialchars($row['Nombre']);
+            }
+            if (!empty($row['Foto'])) {
+                // Si la ruta es relativa, añadir prefijo; si es absoluta o URL, usarla tal cual
+                $foto = $row['Foto'];
+                if (strpos($foto, 'http') === 0 || strpos($foto, '/') === 0) {
+                    $photoSrc = $foto;
+                } else {
+                    $photoSrc = '../' . ltrim($foto, '/');
+                }
+            }
+        }
+        $stmt->close();
+    }
+}
+?>
 <!DOCTYPE html>
 
 <html lang="es">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Copa Mundial FIFA 2026</title>
+<title>Copa Mundial FIFA </title>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
 <link href="../css/inicio.css" rel="stylesheet"/>
 <style data-injected="header-perfil">
@@ -40,7 +75,12 @@
 <!-- <div class="motto">Uniendo al mundo a través del fútbol</div> -->
 </div>
 </div><div class="header-center"><form action="#" class="header-search" method="GET"><input name="q" placeholder="Buscar..." type="search"/><button type="submit">Buscar</button></form></div>
-<div class="countdown"></div>
+<?php if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])): ?>
+<div class="countdown">
+<a class="header-logout-icon-link" href="cerrar_sesion.php" title="Cerrar Sesión"><i class="fa-solid fa-right-from-bracket"></i></a>
+<a class="header-profile-link" href="mis_publicaciones.php"><div class="header-profile-mini"><img alt="Foto de perfil" src="<?php echo htmlspecialchars($photoSrc); ?>"/><span class="name"><?php echo htmlspecialchars($displayName); ?></span></div></a>
+</div>
+<?php endif; ?>
 </div>
 <button class="menu-toggle" id="menuToggle">
 <i class="fas fa-bars"></i>
@@ -60,21 +100,16 @@
 <span>Mexico</span>
 </div>
 </div>
+<!-- <h2><i class="fas fa-tachometer-alt"></i> Mi Mundial</h2> -->
 <ul>
 <li><a href="inicio.php"><i class="fas fa-home"></i> <span>Inicio</span></a></li>
-<li><a href="mis_publicaciones.html"><i class="fa-solid fa-user"></i> <span>Perfil</span></a></li>
-<li><a href="crear_publicacion.html"><i class="fa-solid fa-upload"></i> <span>Publicar</span></a></li>
-<!-- <li><a href="#"><i class="fas fa-cog"></i> <span>Configuración</span></a></li> -->
-<!-- Otros botones -->
-<li><a href="Iniciar_sesion.html"><i class="fa-solid fa-right-to-bracket"></i> <span>Iniciar Sesión</span></a></li>
-<li><a href="administrar_publis.html"><i class="fa-solid fa-user-tie"></i> <span>Administrar</span></a></li>
-<li><a href="mundiales.html"><i class="fas fa-trophy"></i> <span>Mundiales</span></a></li>
-<li><a href="categorías.html"><i class="fa-solid fa-tags"></i> <span>Categorías</span></a></li>
+<li><a href="mis_publicaciones.php"><i class="fa-solid fa-image"></i> <span>Mis Publicaciones</span></a></li>
+<li><a href="editar_perfil.php"><i class="fas fa-cog"></i> <span>Configuración</span></a></li>
 </ul>
 </aside>
 <!-- Contenido principal - Información del Mundial -->
 <main class="main-content">
-<!-- Publicacion  -->
+<h2>Mis Publicaciones </h2>
 <div class="worldcup-container">
 <div class="worldcup-info">
 <h3>Título Publicación</h3>
@@ -82,10 +117,6 @@
 <span class="user-publish">Usuario</span>
 <span class="separator">|</span>
 <span class="user-publish">Fecha</span>
-<span class="separator">|</span>
-<span class="user-publish">Categoria</span>
-<span class="separator">|</span>
-<span class="user-publish">Mundial</span>
 </div>
 <p>El torneo de fútbol más grande del mundo llega a Norteamérica...</p>
 <div class="media-container">
@@ -96,73 +127,31 @@
 </div>
 </div>
 <div class="post-actions">
-<button class="action-btn like-btn">
-<i class="fas fa-heart"></i> Me gusta
-                        <span class="like-count">0</span>
-</button>
-<!-- <button class="action-btn comment-btn" href="#commentsSection">
-                        <i class="fas fa-comment"></i> Comentar
-                    </button> -->
-</div>
-</div>
-<!-- Formulario para nuevo comentario -->
-<div class="worldcup-container">
-    <div class="worldcup-info comment-form-container">
-        <h3>Deja un comentario</h3>
-        <form id="comment-form">
-            <textarea placeholder="Escribe tu comentario aquí..." required></textarea>
-            <button type="submit" class="action-btn">Publicar Comentario</button>
-        </form>
+    <div class="action-buttons-group">
+        <button class="action-btn like-btn">
+            <i class="fas fa-heart"></i> Me gusta
+            <span class="like-count">150</span>
+        </button>
+        <button class="action-btn comment-btn">
+            <i class="fas fa-comment"></i> Comentar
+        </button>
+    </div>
+    <div class="stat-item">
+        <i class="fas fa-eye"></i> 1,280 Vistas
     </div>
 </div>
-
-<!-- Comentarios: -->
-<div class="worldcup-container">
-<div class="worldcup-info comment">
-<h3>Usuario Comentario</h3>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+<div class="post-stats">
+    <h4 class="stats-title">Estadísticas</h4>
+    <div class="stats-list">
+        <div class="stat-item"><strong>Vistas:</strong> 1,280</div>
+        <div class="stat-item"><strong>Me gusta:</strong> <a href="#">150 usuarios</a></div>
+        <div class="stat-item"><strong>Comentarios:</strong> <a href="#">25 usuarios</a></div>
+    </div>
 </div>
 </div>
 </main>
+
 </div>
 <script src="../javascript/inicio.js"></script>
-<!-- Footer -->
-<footer class="footer">
-<div class="footer-content">
-<div class="footer-section">
-<h3>Sobre el Mundial 2026</h3>
-<p>La Copa Mundial de la FIFA 2026</p>
-</div>
-<div class="footer-section">
-<h3>Enlaces Rápidos</h3>
-<div class="footer-links">
-<a href="#">Inicio</a>
-<a href="#">Noticias</a>
-<!-- <a href="#">Calendario</a>
-                    <a href="#">Estadios</a>
-                    <a href="#">Entradas</a> -->
-</div>
-</div>
-<div class="footer-section">
-<h3>Contacto</h3>
-<div class="footer-contact">
-<!-- <span><i class="fas fa-map-marker-alt"></i> FIFA Strasse 20, Zúrich, Suiza</span> -->
-<!-- Colocar links a portafolios y demas cosas del equipo -->
-<span><i class="fas fa-phone"></i> +52 123 456 789</span>
-<span><i class="fas fa-envelope"></i> alumnos.fcfm@placeholder.com</span>
-</div>
-<div class="footer-social">
-<a class="social-icon" href="#"><i class="fab fa-facebook-f"></i></a>
-<a class="social-icon" href="#"><i class="fab fa-twitter"></i></a>
-<a class="social-icon" href="#"><i class="fab fa-instagram"></i></a>
-<a class="social-icon" href="#"><i class="fab fa-youtube"></i></a>
-<a class="social-icon" href="#"><i class="fab fa-tiktok"></i></a>
-</div>
-</div>
-</div>
-<div class="footer-bottom">
-<p>© Elaborado por alumnos de FCFM. Todos los derechos reservados.</p>
-</div>
-</footer>
 </body>
 </html>

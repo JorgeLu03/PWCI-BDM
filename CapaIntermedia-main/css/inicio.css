@@ -110,6 +110,19 @@ body {
     color: var(--accent-color);
 }
 
+.header-logout-icon-link {
+    color: var(--accent-color); /* Same color as the original calendar icon */
+    font-size: 1.1rem; /* Same font size as the countdown text */
+    text-decoration: none;
+    display: flex; /* To center the icon if needed */
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+.header-logout-icon-link:hover {
+    color: white; /* Change color on hover */
+    transform: scale(1.1);
+}
 .menu-toggle {
     display: none;
     background: none;

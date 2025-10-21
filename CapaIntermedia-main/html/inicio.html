@@ -78,10 +78,16 @@
 <!-- Contenido principal - Información del Mundial -->
 <main class="main-content">
     <h2>La Copa Mundial FIFA </h2>
+    <div class="filter-container">
+        <span>Ordenar por:</span>
+        <button class="filter-btn active" data-sort="chronological">Recientes</button>
+        <button class="filter-btn" data-sort="likes">Más gustados</button>
+        <button class="filter-btn" data-sort="comments">Más comentados</button>
+    </div>
     <section class="infografia" id="infografia">
         <div class="cards-grid">
             <!-- Ejemplo de Publicación como Tarjeta -->
-            <a class="card-link" href="comentarios_publi.html">
+            <a class="card-link" data-comments="25" data-date="2024-05-21T10:00:00Z" data-likes="150" href="comentarios_publi.html">
                 <article class="card publication-card">
                     <div class="publication-card-media">
                         <img alt="Foto de la publicación" src="../css/PlaceHolder3.png"/>
@@ -93,7 +99,7 @@
                 </article>
             </a>
             <!-- Puedes añadir más publicaciones aquí siguiendo la misma estructura -->
-            <a class="card-link" href="comentarios_publi.html">
+            <a class="card-link" data-comments="12" data-date="2024-05-20T18:30:00Z" data-likes="95" href="comentarios_publi.html">
                 <article class="card publication-card">
                     <div class="publication-card-media">
                         <img alt="Foto de la publicación" src="../css/PlaceHolder3.png"/>
@@ -104,7 +110,7 @@
                     </div>
                 </article>
             </a>
-            <a class="card-link" href="comentarios_publi.html">
+            <a class="card-link" data-comments="48" data-date="2024-05-22T09:00:00Z" data-likes="210" href="comentarios_publi.html">
                 <article class="card publication-card">
                     <div class="publication-card-media">
                         <img alt="Foto de la publicación" src="../css/PlaceHolder3.png"/>

@@ -6,6 +6,8 @@
 }
 
 body {
+    display: flex; /* Añadido para permitir el centrado */
+    min-height: 100vh; /* Asegura que el body ocupe toda la altura */
     justify-content: center;
     align-items: center;
     flex: 1;
@@ -21,12 +23,13 @@ body {
 
 .contenedor_principal {
     width: 100%;
-    max-width: 450px;
+    max-width: 600px; /* Aumentamos el ancho del contenedor */
     animation: fadeIn 0.8s ease-out;
 }
 
 .login {
     background: #143E64; /* Azul oscuro principal */
+    width: 100%; /* Hacemos que el formulario ocupe todo el contenedor */
     color: white;
     padding: 40px 30px;
     border-radius: 15px;

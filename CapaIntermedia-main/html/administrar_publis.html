@@ -70,8 +70,9 @@
 <li><a href="crear_publicacion.html"><i class="fa-solid fa-upload"></i> <span>Publicar</span></a></li>
 <!-- <li><a href="#"><i class="fas fa-cog"></i> <span>Configuración</span></a></li> -->
 <!-- Otros botones -->
-<li><a href="registro.html"><i class="fa-solid fa-id-card"></i> <span>Registrarse</span></a></li>
+<li><a href="Iniciar_sesion.html"><i class="fa-solid fa-right-to-bracket"></i> <span>Iniciar Sesión</span></a></li>
 <li><a href="administrar_publis.html"><i class="fa-solid fa-user-tie"></i> <span>Administrar</span></a></li>
+<li><a href="mundiales.html"><i class="fas fa-trophy"></i> <span>Mundiales</span></a></li>
 <li><a href="categorías.html"><i class="fa-solid fa-tags"></i> <span>Categorías</span></a></li>
 </ul>
 </aside>
@@ -82,6 +83,7 @@
     <div class="admin-toggle-buttons">
         <button class="toggle-btn active" id="btn-show-publis">Publicaciones</button>
         <button class="toggle-btn" id="btn-show-comments">Comentarios</button>
+        <button class="toggle-btn" id="btn-show-create">Crear</button>
     </div>
 
     <!-- Sección de Publicaciones -->
@@ -138,10 +140,131 @@
         </div>
     </div>
 
+    <!-- Sección de Creación -->
+    <div id="admin-create-section" style="display: none;">
+        <!-- Formulario para Crear Mundial -->
+        <div class="worldcup-container">
+            <div class="worldcup-info">
+                <h3><i class="fas fa-trophy"></i> Crear Nuevo Mundial</h3>
+                <form class="admin-form">
+                    <div class="form-group">
+                        <label for="mundial-logo">Logotipo del Mundial</label>
+                        <input type="file" id="mundial-logo" class="form-input-file" accept="image/*">
+                        <label for="mundial-logo"><i class="fas fa-upload"></i> Seleccionar Logotipo</label>
+                        <div class="media-preview" id="mundial-logo-preview"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="mundial-nombre">Nombre del Mundial</label>
+                        <input type="text" id="mundial-nombre" class="form-input-text" placeholder="Ej: Mundial 2026 - Norteamérica">
+                    </div>
+                    <div class="form-group">
+                        <label for="mundial-anio">Año</label>
+                        <input type="number" id="mundial-anio" class="form-input-text" placeholder="Ej: 2026">
+                    </div>
+                    <div class="form-group">
+                        <label for="mundial-resena">Breve Reseña</label>
+                        <textarea id="mundial-resena" class="form-input-textarea" placeholder="Describe brevemente el mundial..."></textarea>
+                    </div>
+                    <div class="post-actions">
+                        <button type="submit" class="action-btn like-btn">
+                            <i class="fas fa-save"></i> Guardar Mundial
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Formulario para Crear Categoría -->
+        <div class="worldcup-container">
+            <div class="worldcup-info">
+                <h3><i class="fas fa-tags"></i> Crear Nueva Categoría</h3>
+                <form class="admin-form">
+                    <div class="form-group">
+                        <label for="categoria-imagen">Imagen de la Categoría</label>
+                        <input type="file" id="categoria-imagen" class="form-input-file" accept="image/*">
+                        <label for="categoria-imagen"><i class="fas fa-upload"></i> Seleccionar Imagen</label>
+                        <div class="media-preview" id="categoria-imagen-preview"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="categoria-nombre">Nombre de la Categoría</label>
+                        <input type="text" id="categoria-nombre" class="form-input-text" placeholder="Ej: Goles Memorables">
+                    </div>
+                    <div class="form-group">
+                        <label for="categoria-desc">Descripción</label>
+                        <textarea id="categoria-desc" class="form-input-textarea" placeholder="Describe de qué trata la categoría..."></textarea>
+                    </div>
+                    <div class="post-actions">
+                        <button type="submit" class="action-btn like-btn">
+                            <i class="fas fa-save"></i> Guardar Categoría
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </main> 
 </div>
-<script src="../javascript/admin.js"></script>
 <script src="../javascript/inicio.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const btnPublis = document.getElementById('btn-show-publis');
+    const btnComments = document.getElementById('btn-show-comments');
+    const btnCreate = document.getElementById('btn-show-create');
+
+    const sectionPublis = document.getElementById('admin-publis-section');
+    const sectionComments = document.getElementById('admin-comments-section');
+    const sectionCreate = document.getElementById('admin-create-section');
+
+    const buttons = [btnPublis, btnComments, btnCreate];
+    const sections = [sectionPublis, sectionComments, sectionCreate];
+
+    function toggleSections(activeBtn, activeSection) {
+        buttons.forEach(btn => btn.classList.remove('active'));
+        sections.forEach(sec => sec.style.display = 'none');
+
+        activeBtn.classList.add('active');
+        activeSection.style.display = 'block';
+    }
+
+    btnPublis.addEventListener('click', () => {
+        toggleSections(btnPublis, sectionPublis);
+    });
+
+    btnComments.addEventListener('click', () => {
+        toggleSections(btnComments, sectionComments);
+    });
+
+    btnCreate.addEventListener('click', () => {
+        toggleSections(btnCreate, sectionCreate);
+    });
+});
+
+function setupImagePreview(inputId, previewId) {
+    const input = document.getElementById(inputId);
+    const previewContainer = document.getElementById(previewId);
+
+    if (input && previewContainer) {
+        input.addEventListener('change', function(event) {
+            previewContainer.innerHTML = ''; // Limpiar previsualización anterior
+            const file = event.target.files[0];
+
+            if (file && file.type.startsWith('image/')) {
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                img.onload = () => {
+                    URL.revokeObjectURL(img.src); // Liberar memoria
+                }
+                previewContainer.appendChild(img);
+            }
+        });
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    setupImagePreview('mundial-logo', 'mundial-logo-preview');
+    setupImagePreview('categoria-imagen', 'categoria-imagen-preview');
+});
+</script>
 <!-- Footer -->
 <footer class="footer">
 <div class="footer-content">

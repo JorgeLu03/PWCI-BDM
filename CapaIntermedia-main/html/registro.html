@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrate </title>
+    <link rel="stylesheet" type="text/css" href="../css/inicio.css">
+    <link rel="stylesheet" type="text/css" href="../css/login.css">
+</head>
+
+<body>
+    <main>
+        <div class="contenedor_principal">
+            <!-- Formulario -->
+            <section class="login">
+                <form class="form" action="" method="POST">
+                    <h2 class="publicacion_titulo">Crea una cuenta</h2>
+                    <div class="form_container">
+                        <!-- Campos del formulario --> 
+                        <!-- Nombre Completo -->
+                        <div class="form_gruop">
+                            <input type="text" id="USuariotxt" name="USuariotxt" class="form_input"
+                                placeholder="Nombre Completo" required>
+                            <i class="fas fa-user"></i>
+                            <span class="form_line"></span>
+                        </div>
+                        <!-- Fecha de Nacimiento -->
+                        <div class="form_gruop">
+                            <label>Fecha de Nacimiento:</label>
+                            <input type="date" id="USuariotxt" name="USuariotxt" class="form_input"
+                                placeholder="Fecha de Nacimiento" required>
+                            <i class="fas fa-user"></i>
+                            <span class="form_line"></span>
+                        </div>
+                        <!-- Fotografía de Perfil -->
+                        <div class="form_group">
+                            <label>Foto de perfil:</label>
+                            <div class="file-upload-container">
+                                <button type="button" class="form_submit">Seleccionar imagen</button>
+                                <input type="file" id="profilePhoto" accept="image/*" style="display: none;">
+                            </div>
+                            <div id="imagePreview" class="image-preview"></div>
+                        </div>
+                        <!-- Genero -->
+                        <div class="form_gruop">
+                            <label>Genero:</label>
+                            <input list="genero" class="form_input" placeholder="Escribe o selecciona">
+                            <datalist id="genero">
+                                <option value="Masculino">
+                                <option value="Femenino">
+                                <option value="Otro">
+                            </datalist>
+                            <i class="fas fa-user"></i>
+                            <span class="form_line"></span>
+                        </div>
+                        <!-- Pais de Nacimiento -->
+                        <div class="form_gruop">
+                            <label>País de Nacimiento:</label>
+                            <input list="paises" class="form_input" placeholder="Escribe o selecciona">
+                            <datalist id="paises">
+                                <option value="Argentina">
+                                <option value="Brasil">
+                                <option value="Canadá">
+                                <option value="Chile">
+                                <option value="Colombia">
+                                <option value="Estados Unidos">
+                                <option value="México">
+                                <option value="España">
+                            </datalist>
+                            <i class="fas fa-user"></i>
+                            <span class="form_line"></span>
+                        </div>
+                        <!-- Nacionalidad -->
+                        <div class="form_gruop">
+                            <label>Nacionalidad:</label>
+                            <input list="nacionalidad" class="form_input" placeholder="Escribe o selecciona">
+                            <datalist id="nacionalidad">
+                                <option value="Argentina">
+                                <option value="Brasil">
+                                <option value="Canadá">
+                                <option value="Chile">
+                                <option value="Colombia">
+                                <option value="Estados Unidos">
+                                <option value="México">
+                                <option value="España">
+                            </datalist>
+                            <i class="fas fa-user"></i>
+                            <span class="form_line"></span>
+                        </div>
+                        <!-- Correo Electronico -->
+                        <div class="form_gruop">
+                            <input type="text" id="USuariotxt" name="USuariotxt" class="form_input"
+                                placeholder="Correo electronico" required>
+                            <i class="fas fa-user"></i>
+                            <span class="form_line"></span>
+                        </div>
+                        <!-- Contraseña -->
+                        <div class="form_gruop">
+                            <input type="password" id="Contraseñatxt" name="Contraseñatxt" class="form_input"
+                                placeholder="Contraseña" required>
+                            <i class="fas fa-lock"></i>
+                            <span class="form_line"></span>
+                        </div>
+                        <p><a href="">¿Has olvidado tu contraseña?</a></p>
+
+                        <input type="button" class="form_submit" value="Registrame"
+                            onclick="window.location.href='Iniciar_sesion.html'">
+                        <input type="button" class="form_submit" value="Regresar"
+                            onclick="window.history.back()">
+                    </div>
+                </form>
+            </section>
+        </div>
+    </main>
+</body>
+
+</html>

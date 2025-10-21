@@ -1,0 +1,208 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    justify-content: center;
+    align-items: center;
+    flex: 1;
+    padding: 30px;
+    background: rgba(234, 238, 255, 0.95);
+    overflow-y: auto;
+    position: relative;
+    /* Este es un fondo con patron de cuadritos */
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M20,20 L80,20 L80,80 L20,80 Z" fill="none" stroke="%230d3e64" stroke-width="1" opacity="0.1"/></svg>');
+    /* Aqui esta la imagen de fondo */
+    /* background-image: url(fondo_001.png);  */
+}
+
+.contenedor_principal {
+    width: 100%;
+    max-width: 450px;
+    animation: fadeIn 0.8s ease-out;
+}
+
+.login {
+    background: #143E64; /* Azul oscuro principal */
+    color: white;
+    padding: 40px 30px;
+    border-radius: 15px;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.login::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background-size: 200px;
+    opacity: 0.2;
+    animation: rotate 25s linear infinite;
+}
+
+.publicacion_titulo {
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 28px;
+    position: relative;
+    z-index: 1;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.form_container {
+    position: relative;
+    z-index: 1;
+}
+
+.form_gruop {
+    position: relative;
+    margin-bottom: 30px;
+}
+
+.form_input {
+    width: 100%;
+    padding: 14px 15px;
+    border: none;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.7);
+    background: transparent;
+    outline: none;
+    color: white;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.form_input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.form_input:focus {
+    border-bottom-color: white;
+}
+
+.form_line {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: white;
+    transition: width 0.3s ease;
+}
+
+.form_input:focus~.form_line {
+    width: 100%;
+}
+
+.form_gruop i {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.login p {
+    text-align: right;
+    margin-top: -15px;
+    margin-bottom: 20px;
+}
+
+.login a {
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.login a:hover {
+    text-decoration: underline;
+    color: #ffd700;
+}
+
+.form_submit {
+    width: 100%;
+    padding: 14px;
+    margin: 10px 0;
+    border: none;
+    border-radius: 8px;
+    background: white;
+    color: #143E64;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.form_submit:hover {
+    background: #f0f0f0;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+}
+
+.form_submit:active {
+    transform: translateY(0);
+}
+
+.form_submit:nth-child(2) {
+    background: #ffd700;
+    color: #333;
+}
+
+.form_submit:nth-child(2):hover {
+    background: #ffcc00;
+}
+
+.brand {
+    text-align: center;
+    margin-top: 30px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 14px;
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 480px) {
+    .login {
+        padding: 30px 20px;
+    }
+
+    .publicacion_titulo {
+        font-size: 24px;
+    }
+
+    .form_input {
+        padding: 12px 15px;
+    }
+}

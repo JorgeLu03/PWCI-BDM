@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Publicación - Mundial 2026</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/new_publi.css">
+</head>
+
+<body>
+    <div class="publicacion-container">
+        <a href="inicio.html" class="btn-back-home"><i class="fas fa-home"></i></a>
+        <div class="publicacion-header">
+            <h2><i class="fas fa-plus-circle"></i> Crear Nueva Publicación</h2>
+            <p>Comparte noticias, fotos y videos del Mundial 2026</p>
+        </div>
+
+        <form class="publicacion-form" id="publicacionForm">
+            <!-- Título de la publicación -->
+            <div class="form-group">
+                <label for="titulo"><i class="fas fa-heading"></i> Título de la publicación</label>
+                <input type="text" id="titulo" class="form-input"
+                    placeholder="Ej: Argentina gana el partido contra Brasil" required>
+            </div>
+
+            <!-- Contenido de la publicación -->
+            <div class="form-group">
+                <label for="contenido"><i class="fas fa-align-left"></i> Contenido</label>
+                <textarea id="contenido" class="form-textarea" placeholder="Escribe el contenido de tu publicación..."
+                    required></textarea>
+                <!-- <div class="character-count" id="charCount">0/1000 caracteres</div> -->
+            </div>
+
+            <!-- Categoría -->
+            <div class="form-group">
+                <label><i class="fas fa-tag"></i> Categoría</label>
+                <div class="categoria-tags">
+                    <select id="worldCupYear" class="categoria-tag">
+                        <option value="">-- Selecciona una Categoria --</option>
+                        <option value="noticia">Noticia</option>
+                        <option value="resultado">Resultado</option>
+                        <option value="analisis">Analisis</option>
+                        <option value="opinion">Opinion</option>
+                        <option value="multimedia">Multimedia</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Etiquetas del Mundial -->
+            <div class="form-group">
+                <label><i class="fas fa-hashtag"></i> Etiquetas del Mundial</label>
+                <div class="categoria-tags">
+                    <select id="worldCupYear" class="categoria-tag">
+                        <option value="">-- Selecciona un año --</option>
+                        <option value="2022">Mundial 2022 - Catar</option>
+                        <option value="2018">Mundial 2018 - Rusia</option>
+                        <option value="2014">Mundial 2014 - Brasil</option>
+                        <option value="2010">Mundial 2010 - Sudáfrica</option>
+                        <option value="2006">Mundial 2006 - Alemania</option>
+                        <option value="2002">Mundial 2002 - Corea/Japón</option>
+                        <option value="1998">Mundial 1998 - Francia</option>
+                        <option value="1994">Mundial 1994 - Estados Unidos</option>
+                        <option value="1990">Mundial 1990 - Italia</option>
+                        <option value="1986">Mundial 1986 - México</option>
+                        <option value="1982">Mundial 1982 - España</option>
+                        <option value="1978">Mundial 1978 - Argentina</option>
+                        <option value="1974">Mundial 1974 - Alemania Occidental</option>
+                        <option value="1970">Mundial 1970 - México</option>
+                        <option value="1966">Mundial 1966 - Inglaterra</option>
+                        <option value="1962">Mundial 1962 - Chile</option>
+                        <option value="1958">Mundial 1958 - Suecia</option>
+                        <option value="1954">Mundial 1954 - Suiza</option>
+                        <option value="1950">Mundial 1950 - Brasil</option>
+                        <option value="1938">Mundial 1938 - Francia</option>
+                        <option value="1934">Mundial 1934 - Italia</option>
+                        <option value="1930">Mundial 1930 - Uruguay</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Multimedia -->
+            <div class="form-group">
+                <label><i class="fas fa-image"></i> Multimedia (Opcional)</label>
+                <div class="file-upload" id="uploadArea">
+                    <button type="button" class="btn btn-upload"
+                        onclick="document.getElementById('mediaFile').click()">
+                        <i class="fa-solid fa-photo-film"></i>
+                        Seleccionar archivos
+                    </button>
+                    <input type="file" id="mediaFile" class="file-input" accept="image/*,video/*" multiple>
+                    <div class="media-preview" id="mediaPreview"></div>
+                </div>
+            </div>
+
+            <!-- Botones  -->
+            <div class="form-buttons">
+                <button type="button" class="btn btn-secondary" onclick="window.history.back()">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-paper-plane"></i> Publicar
+                </button>
+            </div>
+        </form>
+    </div>
+    <script src="../javascript/crear_publi.js"></script>
+</body>
+
+</html>

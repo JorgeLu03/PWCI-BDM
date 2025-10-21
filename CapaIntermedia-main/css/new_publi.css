@@ -1,0 +1,267 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, #0a2e5a, #0066b3, #0a2e5a);
+    min-height: 100vh;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.publicacion-container {
+    background: rgba(255, 255, 255, 0.95);
+    width: 100%;
+    max-width: 800px;
+    border-radius: 15px;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    position: relative;
+}
+
+.publicacion-header {
+    background: #143E64; /* Azul oscuro principal */
+    color: white;
+    padding: 25px;
+    text-align: center;
+}
+
+.publicacion-header h2 {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.publicacion-header p {
+    opacity: 0.9;
+}
+
+.publicacion-form {
+    padding: 30px;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #143E64;
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+    border-color: #143E64;
+    outline: none;
+    box-shadow: 0 0 10px rgba(20, 62, 100, 0.2);
+}
+
+.form-textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.file-upload {
+    /* border: 2px dashed #143E64; */
+    padding: 30px;
+    text-align: center;
+    border-radius: 8px;
+    /* cursor: pointer; */
+    transition: all 0.3s ease;
+}
+
+.file-upload:hover {
+    /* background: rgba(20, 62, 100, 0.05); */
+}
+
+.file-upload i {
+    font-size: 3rem;
+    color: #143E64;
+    margin-bottom: 15px;
+}
+
+.file-input {
+    display: none;
+}
+
+.preview-container {
+    margin-top: 20px;
+    display: none;
+}
+
+.preview-container.active {
+    display: block;
+}
+
+.image-preview {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+.video-preview {
+    max-width: 100%;
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+.categoria-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.categoria-tag {
+    background: #f0f0f0;
+    padding: 8px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.categoria-tag:hover {
+    background: #e0e0e0;
+}
+
+.categoria-tag.active {
+    background: #143E64;
+    color: white;
+}
+
+.form-buttons {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.btn {
+    flex: 1;
+    padding: 15px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: #143E64;
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(20, 62, 100, 0.3);
+}
+
+.btn-secondary {
+    background: #f0f0f0;
+    color: #666;
+}
+
+.btn-secondary:hover {
+    background: #e0e0e0;
+}
+
+.btn-upload {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 30px;
+    color: white;
+    background: #143E64;
+    text-align: center;
+    padding: 12px 24px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.btn-upload:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+.btn-upload:active {
+    transform: translateY(0);
+}
+
+.btn-upload i {
+    font-size: 2rem;
+    border-radius: 30px;
+    color: white;
+    margin: 1rem;
+}
+
+.character-count {
+    text-align: right;
+    font-size: 14px;
+    color: #666;
+    margin-top: 5px;
+}
+
+@media (max-width: 768px) {
+    .publicacion-container {
+        margin: 10px;
+    }
+
+    .publicacion-form {
+        padding: 20px;
+    }
+
+    .form-buttons {
+        flex-direction: column;
+    }
+}
+
+.media-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.media-preview img, .media-preview video {
+    max-width: 100px;
+    max-height: 100px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.btn-back-home {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    color: white;
+    font-size: 1.5rem;
+    text-decoration: none;
+    z-index: 10;
+    transition: transform 0.2s ease;
+}
+
+.btn-back-home:hover {
+    transform: scale(1.1);
+}

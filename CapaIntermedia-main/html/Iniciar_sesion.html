@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesion </title>
+    <link rel="stylesheet" type="text/css" href="../css/inicio.css">
+    <link rel="stylesheet" type="text/css" href="../css/login.css">
+</head>
+
+<body>
+    <main>
+        <div class="contenedor_principal">
+            <!-- Formulario -->
+            <section class="login">
+                <form class="form" action="" method="POST">
+                    <h2 class="publicacion_titulo">Iniciar Sesión</h2>
+                    <div class="form_container">
+                        <!-- Campos del formulario -->
+                        <div class="form_gruop">
+                            <input type="text" id="USuariotxt" name="USuariotxt" class="form_input"
+                                placeholder="Usuario" required>
+                            <i class="fas fa-user"></i>
+                            <span class="form_line"></span>
+                        </div>
+
+                        <div class="form_gruop">
+                            <input type="password" id="Contraseñatxt" name="Contraseñatxt" class="form_input"
+                                placeholder="Contraseña" required>
+                            <i class="fas fa-lock"></i>
+                            <span class="form_line"></span>
+                        </div>
+                        <p><a href="">¿Has olvidado tu contraseña?</a></p>
+
+                        <input type="button" class="form_submit" value="Iniciar Sesión" 
+                            onclick="window.location.href='inicio.html'">
+                        <input type="button" class="form_submit" value="Registrarse"
+                            onclick="window.location.href='registro.html'">
+                    </div>
+                </form>
+                <!-- <div class="brand">
+                    © 2023 Sistema de Autenticación
+                </div> -->
+            </section>
+        </div>
+    </main>
+</body>
+
+</html>

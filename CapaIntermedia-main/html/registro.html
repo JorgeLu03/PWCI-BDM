@@ -34,13 +34,12 @@
                             <span class="form_line"></span>
                         </div>
                         <!-- Fotografía de Perfil -->
-                        <div class="form_group">
+                        <div class="form_gruop">
                             <label>Foto de perfil:</label>
                             <div class="file-upload-container">
-                                <button type="button" class="form_submit">Seleccionar imagen</button>
+                                <button type="button" class="form_submit" id="selectImageBtn">Seleccionar imagen</button>
                                 <input type="file" id="profilePhoto" accept="image/*" style="display: none;">
                             </div>
-                            <div id="imagePreview" class="image-preview"></div>
                         </div>
                         <!-- Genero -->
                         <div class="form_gruop">
@@ -113,6 +112,32 @@
             </section>
         </div>
     </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const selectImageBtn = document.getElementById('selectImageBtn');
+            const profilePhotoInput = document.getElementById('profilePhoto');
+            const imagePreviewContainer = document.querySelector('.file-upload-container');
+
+            selectImageBtn.addEventListener('click', function () {
+                profilePhotoInput.click();
+            });
+
+            profilePhotoInput.addEventListener('change', function (event) {
+                const file = event.target.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        // Eliminar previsualización anterior si existe
+                        const oldPreview = document.getElementById('imagePreview');
+                        if(oldPreview) oldPreview.remove();
+                        
+                        imagePreviewContainer.innerHTML += `<div id="imagePreview" class="image-preview"><img src="${e.target.result}" alt="Vista previa de la imagen"></div>`;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        });
+    </script>
 </body>
 
 </html>

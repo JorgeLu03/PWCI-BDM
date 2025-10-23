@@ -3,51 +3,27 @@ session_start();
 
 $error_message = '';
 
-// Incluye el archivo de conexión
-require_once '../BD/Connection/Connection.php';
+require_once '../BD/Connection/Connection.php'; // $conn
+require_once '../BD/Querys/auth.php'; // attemptLogin
 
-// Procesar el envío del formulario
 if ($_SERVER["REQUEST_METHOD"] === 'POST') {
     $usuario = isset($_POST['USuariotxt']) ? trim($_POST['USuariotxt']) : '';
     $contrasena = isset($_POST['Contraseñatxt']) ? $_POST['Contraseñatxt'] : '';
 
-    if ($usuario === '' || $contrasena === '') {
+    if (empty($usuario) || empty($contrasena)) {
         $error_message = 'Por favor completa todos los campos.';
     } else {
-        // Preparar y ejecutar la consulta
-        $stmt = $conn->prepare("SELECT ID_User, Nombre, Contrasena, Correo FROM USUARIO WHERE Correo = ? OR Nombre = ?");
-        if ($stmt) {
-            $stmt->bind_param('ss', $usuario, $usuario);
-            $stmt->execute();
-            $result = $stmt->get_result();
+        $loginResult = attemptLogin($conn, $usuario, $contrasena);
 
-            if ($result && $result->num_rows === 1) {
-                $user = $result->fetch_assoc();
-
-                // Verificación con SHA-256 (hash hecho al insertar)
-                if (hash('sha256', $contrasena) === $user['Contrasena']) {
-                    session_regenerate_id(true);
-                    $_SESSION['user_id'] = $user['ID_User'];
-                    $_SESSION['username'] = $user['Nombre'];
-                    $stmt->close();
-                    $conn->close();
-                    header('Location: inicio.php');
-                    exit();
-                } else {
-                    $error_message = 'Usuario o contraseña incorrectos.';
-                }
-            } else {
-                $error_message = 'Usuario o contraseña incorrectos.';
-            }
-
-            $stmt->close();
+        if ($loginResult === true) {
+            session_regenerate_id(true);
+            $conn->close();
+            header('Location: inicio.php');
+            exit();
         } else {
-            // Error en la preparación de la consulta
-            $error_message = 'Error interno. Intenta nuevamente más tarde.';
+            $error_message = $loginResult;
         }
     }
-
-    // Cerrar conexión
     $conn->close();
 }
 ?>
@@ -89,7 +65,7 @@ if ($_SERVER["REQUEST_METHOD"] === 'POST') {
                         </div>
 
                         <input type="submit" class="form_submit" value="Iniciar Sesión">
-                        <p style="text-align: center; margin: 20px 0 10px;">¿No tienes cuenta? <a href="registro.html" style="text-decoration: underline;">Regístrate</a></p>
+                        <p style="text-align: center; margin: 20px 0 10px;">¿No tienes cuenta? <a href="registro.php" style="text-decoration: underline;">Regístrate</a></p>
                         <input type="button" class="form_submit" value="Regresar"
                             onclick="window.history.back()">
                     </div>

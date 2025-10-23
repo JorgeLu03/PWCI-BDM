@@ -196,6 +196,69 @@ body {
     }
 }
 
+/* Estilos para la subida de imagen en registro.html */
+.file-upload-container {
+    margin-top: 10px;
+    text-align: center;
+}
+
+.file-upload-container .form_submit {
+    margin-bottom: 15px;
+}
+
+.image-preview-container {
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+/* Contenedor directo de la imagen */
+.preview-wrapper {
+    width: 100%;
+    max-width: 160px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.image-preview-container img,
+.preview-wrapper img {
+    display: block;
+    max-width: 160px;
+    width: auto;
+    height: auto;
+    max-height: 160px;
+    border-radius: 10px;
+    object-fit: contain;
+    border: 3px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Optional circular avatar style: add class "avatar" to img if you want a circular crop */
+.image-preview-container img.avatar {
+    width: 120px;
+    height: 120px;
+    max-width: none;
+    max-height: none;
+    border-radius: 50%;
+    object-fit: cover; /* fill the circle (may crop) */
+}
+
+/* Estilos para la previsualización de imagen en registro.php */
+.image-preview-container #imagePreview {
+    max-width: 160px;
+    width: 100%;
+    height: auto;
+    max-height: 160px;
+    border-radius: 10px;
+    object-fit: contain;
+    border: 3px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+
 @media (max-width: 480px) {
     .login {
         padding: 30px 20px;

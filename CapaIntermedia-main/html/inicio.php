@@ -4,34 +4,11 @@ session_start();
 // Conexión a la base de datos
 require_once '../BD/Connection/Connection.php';
 
-$displayName = 'Mi Perfil';
-$photoSrc = '../css/PlaceHolder3.png';
+require_once '../BD/Querys/user_functions.php';
 
-if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
-    $uid = (int) $_SESSION['user_id'];
-    $stmt = $conn->prepare("SELECT Nombre, Foto FROM USUARIO WHERE ID_User = ?");
-    if ($stmt) {
-        $stmt->bind_param('i', $uid);
-        $stmt->execute();
-        $res = $stmt->get_result();
-        if ($res && $res->num_rows === 1) {
-            $row = $res->fetch_assoc();
-            if (!empty($row['Nombre'])) {
-                $displayName = htmlspecialchars($row['Nombre']);
-            }
-            if (!empty($row['Foto'])) {
-                // Si la ruta es relativa, añadir prefijo; si es absoluta o URL, usarla tal cual
-                $foto = $row['Foto'];
-                if (strpos($foto, 'http') === 0 || strpos($foto, '/') === 0) {
-                    $photoSrc = $foto;
-                } else {
-                    $photoSrc = '../' . ltrim($foto, '/');
-                }
-            }
-        }
-        $stmt->close();
-    }
-}
+$userDetails = getUserDetails($conn);
+$displayName = $userDetails['displayName'];
+$photoSrc = $userDetails['photoSrc'];
 
 $conn->close();
 ?>

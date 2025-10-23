@@ -82,7 +82,7 @@ $conn->close();
 <ul>
 <li><a href="inicio.php"><i class="fas fa-home"></i> <span>Inicio</span></a></li>
 <li><a href="mis_publicaciones.php"><i class="fa-solid fa-user"></i> <span>Perfil</span></a></li>
-<li><a href="crear_publicacion.html"><i class="fa-solid fa-upload"></i> <span>Publicar</span></a></li>
+<li><a href="crear_publicacion.php"><i class="fa-solid fa-upload"></i> <span>Publicar</span></a></li>
 <!-- <li><a href="#"><i class="fas fa-cog"></i> <span>Configuración</span></a></li> -->
 <!-- Otros botones -->
 <li><a href="Iniciar_sesion.php"><i class="fa-solid fa-right-to-bracket"></i> <span>Iniciar Sesión</span></a></li>

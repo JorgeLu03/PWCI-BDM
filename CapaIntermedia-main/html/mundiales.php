@@ -96,10 +96,10 @@ $photoSrc = $userDetails['photoSrc'];
 <a class="card-link" href="inicio.php?worldcup=2022">
 <article class="card publication-card">
     <div class="publication-card-media">
-        <img alt="Logo Mundial Catar 2022" src="../css/PlaceHolder3.png"/>
+        <img alt="Logo Mundial Qatar 2022" src="../css/PlaceHolder3.png"/>
     </div>
     <div class="publication-card-content">
-        <h3>Catar 2022</h3>
+        <h3>Qatar 2022</h3>
         <p>La primera Copa del Mundo celebrada en el mundo árabe, llena de sorpresas y con una final inolvidable.</p>
     </div>
 </article>

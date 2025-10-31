@@ -6,8 +6,7 @@ require_once '../BD/Querys/user_functions.php';
 $userDetails = getUserDetails($conn);
 $displayName = $userDetails['displayName'];
 $photoSrc = $userDetails['photoSrc'];
-
-$conn->close();
+$userType = $userDetails['userType'];
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -66,7 +65,7 @@ $conn->close();
                 <a class="header-logout-icon-link" href="cerrar_sesion.php" title="Cerrar Sesión"><i class="fa-solid fa-right-from-bracket"></i></a>
                 <a class="header-profile-link" href="mis_publicaciones.php">
                     <div class="header-profile-mini">
-                        <img alt="Foto de perfil" src="<?php echo htmlspecialchars($photoSrc); ?>"/>
+                        <img alt="Foto de perfil" src="<?php echo $photoSrc; ?>"/>
                         <span class="name"><?php echo htmlspecialchars($displayName); ?></span>
                     </div>
                 </a>
@@ -87,7 +86,9 @@ $conn->close();
                 <li><a href="mis_publicaciones.php"><i class="fa-solid fa-user"></i> <span>Perfil</span></a></li>
                 <li><a href="crear_publicacion.php"><i class="fa-solid fa-upload"></i> <span>Publicar</span></a></li>
                 <li><a href="Iniciar_sesion.php"><i class="fa-solid fa-right-to-bracket"></i> <span>Iniciar Sesión</span></a></li>
+                <?php if ($userType === 0): ?>
                 <li><a href="administrar_publis.php"><i class="fa-solid fa-user-tie"></i> <span>Administrar</span></a></li>
+                <?php endif; ?>
                 <li><a href="mundiales.php"><i class="fas fa-trophy"></i> <span>Mundiales</span></a></li>
                 <li><a href="categorías.php"><i class="fa-solid fa-tags"></i> <span>Categorías</span></a></li>
             </ul>

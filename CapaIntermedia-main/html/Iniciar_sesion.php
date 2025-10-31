@@ -17,15 +17,14 @@ if ($_SERVER["REQUEST_METHOD"] === 'POST') {
 
         if ($loginResult === true) {
             session_regenerate_id(true);
-            $conn->close();
             header('Location: inicio.php');
             exit();
         } else {
             $error_message = $loginResult;
         }
     }
-    $conn->close();
 }
+$conn->close();
 ?>
 <!DOCTYPE html>
 <html lang="es">

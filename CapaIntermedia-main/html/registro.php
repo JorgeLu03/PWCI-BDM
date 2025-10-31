@@ -15,42 +15,40 @@ if ($_SERVER["REQUEST_METHOD"] === 'POST') {
     $correo = $_POST['correo'] ?? '';
     $telefono = $_POST['telefono'] ?? '';
     $contrasena = $_POST['contrasena'] ?? '';
-    $tipo_usuario = 'Usuario';
-    $foto_path = null;
+    $tipo_usuario = true; // Se envía como booleano (1) para el tipo de usuario
+    $foto_data = null;
 
-    // --- Validaciones básicas ---
     if (empty($nombre) || empty($fechaNac) || empty($genero) || empty($pais) || empty($nacionalidad) || empty($correo) || empty($telefono) || empty($contrasena) || empty($_FILES['profilePhoto']['name'])) {
         $error_message = 'Por favor, completa todos los campos obligatorios.';
     } else {
-        // --- foto de perfil ---
         if (isset($_FILES['profilePhoto']) && $_FILES['profilePhoto']['error'] == 0) {
-            $upload_dir = '../uploads/profile_pics/';
-            if (!is_dir($upload_dir)) {
-                mkdir($upload_dir, 0777, true);
-            }
-            $file_extension = pathinfo($_FILES['profilePhoto']['name'], PATHINFO_EXTENSION);
-            $safe_filename = uniqid('user_', true) . '.' . $file_extension;
-            $target_file = $upload_dir . $safe_filename;
-
-            // Mover el archivo
-            if (move_uploaded_file($_FILES['profilePhoto']['tmp_name'], $target_file)) {
-                $foto_path = 'uploads/profile_pics/' . $safe_filename; // Ruta para la BD
-            } else {
+            // Leer el contenido binario del archivo temporal
+            $foto_data = file_get_contents($_FILES['profilePhoto']['tmp_name']);
+            if ($foto_data === false) {
                 $error_message = 'Hubo un error al subir tu foto de perfil.';
+                $foto_data = null;
             }
         }
 
-        // --- Llamar procedure ---
-        if (empty($error_message) && $foto_path !== null) { // Foto subida correctamente
+        if (empty($error_message)) {
+            $password_pattern = '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/';
+            if (!preg_match($password_pattern, $contrasena)) {
+                $error_message = 'La contraseña debe contener al menos una letra minúscula, una letra mayúscula, un número y un carácter especial.';
+            }
+        }
+
+        if (empty($error_message) && $foto_data !== null) {
             $stmt = $conn->prepare("CALL SP_NewUser(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             if ($stmt) {
-                $stmt->bind_param('ssssssssss', $correo, $telefono, $contrasena, $fechaNac, $tipo_usuario, $nombre, $foto_path, $pais, $genero, $nacionalidad);
-                
+                $null = NULL; // Variable para bind_param
+                // El séptimo '?' corresponde a la foto (índice 6)
+                $stmt->bind_param('ssssisbsss', $correo, $telefono, $contrasena, $fechaNac, $tipo_usuario, $nombre, $null, $pais, $genero, $nacionalidad);
+                $stmt->send_long_data(6, $foto_data);
+
                 if ($stmt->execute()) {
                     $success_message = "¡Registro exitoso! Ahora puedes iniciar sesión.";
                     header("refresh:3;url=Iniciar_sesion.php");
                 } else {
-                    // Errores de MySQL
                     if ($conn->errno == 1062) {
                         $error_message = "El correo electrónico ya está registrado. Por favor, utiliza otro.";
                     } else {

@@ -6,7 +6,6 @@ require_once '../BD/Querys/user_functions.php';
 $userDetails = getUserDetails($conn);
 $displayName = $userDetails['displayName'];
 $photoSrc = $userDetails['photoSrc'];
-
 ?>
 <!DOCTYPE html>
 
@@ -53,7 +52,7 @@ $photoSrc = $userDetails['photoSrc'];
 <?php if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])): ?>
 <div class="countdown">
 <a class="header-logout-icon-link" href="cerrar_sesion.php" title="Cerrar Sesión"><i class="fa-solid fa-right-from-bracket"></i></a>
-<a class="header-profile-link" href="mis_publicaciones.php"><div class="header-profile-mini"><img alt="Foto de perfil" src="<?php echo htmlspecialchars($photoSrc); ?>"/><span class="name"><?php echo htmlspecialchars($displayName); ?></span></div></a>
+<a class="header-profile-link" href="mis_publicaciones.php"><div class="header-profile-mini"><img alt="Foto de perfil" src="<?php echo $photoSrc; ?>"/><span class="name"><?php echo htmlspecialchars($displayName); ?></span></div></a>
 </div>
 <?php endif; ?>
 </div>

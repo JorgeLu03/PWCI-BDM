@@ -23,7 +23,12 @@ function getUserDetails(mysqli $conn): array
 
                 if (!empty($row['Foto'])) {
                     // Convertir los datos BLOB a una Data URI para mostrar la imagen
-                    $photoSrc = 'data:image/jpeg;base64,' . base64_encode($row['Foto']);
+                    if (is_string($row['Foto'])) {
+                        $photoSrc = 'data:image/jpeg;base64,' . base64_encode($row['Foto']);
+                    } else {
+                        // Si ya es base64 (por alguna razón), usarlo directamente.
+                        $photoSrc = $row['Foto'];
+                    }
                 }
 
                 if (isset($row['Tipo_usuario'])) {

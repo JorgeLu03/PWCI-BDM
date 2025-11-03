@@ -10,6 +10,13 @@ $userDetails = getUserDetails($conn);
 $displayName = $userDetails['displayName'];
 $photoSrc = $userDetails['photoSrc'];
 $userType = $userDetails['userType'];
+
+// --- Lógica para obtener todas las categorías ---
+$categories = [];
+$result = $conn->query("SELECT ID_Categ, Nombre, Descripcion FROM V_Categorias");
+if ($result) {
+    $categories = $result->fetch_all(MYSQLI_ASSOC);
+}
 ?>
 <!DOCTYPE html>
 
@@ -96,32 +103,22 @@ $userType = $userDetails['userType'];
 <main class="main-content">
 <h2 class="section-title"><i class="fa-solid fa-globe"></i> Categorías</h2>
 <section class="infografia" id="infografia">
-<div class="cards-grid" style="padding-top: 1rem;">
-<a class="card-link" href="inicio.php?category=goles-memorables">
-<article class="card">
-    <h3>Goles Memorables</h3>
-    <p>Revive los goles más espectaculares y decisivos de la historia de los mundiales.</p>
-</article>
-</a>
-<a class="card-link" href="inicio.php?category=jugadas-polemicas">
-<article class="card">
-    <h3>Jugadas Polémicas</h3>
-    <p>Analiza las decisiones arbitrales y jugadas que generaron debate en el mundo del fútbol.</p>
-</article>
-</a>
-<a class="card-link" href="inicio.php?category=faltas-y-sanciones">
-<article class="card">
-    <h3>Faltas y Sanciones</h3>
-    <p>Explora las faltas más duras, tarjetas rojas y sanciones que marcaron los partidos.</p>
-</article>
-</a>
-<a class="card-link" href="inicio.php?category=atajadas-increibles">
-<article class="card">
-    <h3>Atajadas Increíbles</h3>
-    <p>Disfruta de las paradas más impresionantes realizadas por los mejores porteros del torneo.</p>
-</article>
-</a>
-</div>
+    <div class="cards-grid" style="padding-top: 1rem;">
+        <?php if (count($categories) > 0): ?>
+            <?php foreach ($categories as $category): ?>
+                <a class="card-link" href="categoria.php?id=<?php echo htmlspecialchars($category['ID_Categ']); ?>">
+                    <article class="card">
+                        <h3><?php echo htmlspecialchars($category['Nombre']); ?></h3>
+                        <p><?php echo htmlspecialchars($category['Descripcion']); ?></p>
+                    </article>
+                </a>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <div class="worldcup-container">
+                <p style="text-align: center; width: 100%; padding: 2rem;">Aún no se han creado categorías. ¡Sé el primero en añadir una desde el panel de administración!</p>
+            </div>
+        <?php endif; ?>
+    </div>
 </section>
 </main>
 

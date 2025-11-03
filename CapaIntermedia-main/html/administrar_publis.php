@@ -10,6 +10,48 @@ $userDetails = getUserDetails($conn);
 $displayName = $userDetails['displayName'];
 $photoSrc = $userDetails['photoSrc'];
 $userType = $userDetails['userType'];
+
+$feedback_message = '';
+$feedback_type = ''; // 'success' o 'error'
+$active_tab = 'publis'; // Pestaña activa por defecto
+
+// --- Lógica para crear una nueva categoría ---
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['create_category'])) {
+    $active_tab = 'create'; // Si se envía el form, la pestaña activa es 'create'
+    $nombre = $_POST['categoria_nombre'] ?? '';
+    $descripcion = $_POST['categoria_desc'] ?? '';
+    $imagen_data = null;
+
+    // Validar que los campos no estén vacíos
+    if (!empty($nombre) && !empty($descripcion) && isset($_FILES['categoria_imagen']) && $_FILES['categoria_imagen']['error'] == 0) {
+        // Leer el contenido binario de la imagen
+        $imagen_data = file_get_contents($_FILES['categoria_imagen']['tmp_name']);
+
+        if ($imagen_data !== false) {
+            $stmt = $conn->prepare("CALL SP_NewCategory(?, ?, ?)");
+            if ($stmt) {
+                $null = NULL; // Necesario para bind_param
+                $stmt->bind_param('ssb', $nombre, $descripcion, $null);
+                $stmt->send_long_data(2, $imagen_data); // Enviar el BLOB
+
+                if ($stmt->execute()) {
+                    $feedback_message = "¡Categoría creada con éxito!";
+                    $feedback_type = 'success';
+                } else {
+                    $feedback_message = "Error al crear la categoría: " . $stmt->error;
+                    $feedback_type = 'error';
+                }
+                $stmt->close();
+            } else {
+                $feedback_message = "Error al preparar la consulta: " . $conn->error;
+                $feedback_type = 'error';
+            }
+        }
+    } else {
+        $feedback_message = "Por favor, completa todos los campos, incluyendo la imagen.";
+        $feedback_type = 'error';
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -93,13 +135,13 @@ $userType = $userDetails['userType'];
     <h2>Administrar Contenido</h2>
 
     <div class="admin-toggle-buttons">
-        <button class="toggle-btn active" id="btn-show-publis">Publicaciones</button>
-        <button class="toggle-btn" id="btn-show-comments">Comentarios</button>
-        <button class="toggle-btn" id="btn-show-create">Crear</button>
+        <button class="toggle-btn <?php echo ($active_tab === 'publis') ? 'active' : ''; ?>" id="btn-show-publis">Publicaciones</button>
+        <button class="toggle-btn <?php echo ($active_tab === 'comments') ? 'active' : ''; ?>" id="btn-show-comments">Comentarios</button>
+        <button class="toggle-btn <?php echo ($active_tab === 'create') ? 'active' : ''; ?>" id="btn-show-create">Crear</button>
     </div>
 
     <!-- Sección de Publicaciones -->
-    <div id="admin-publis-section">
+    <div id="admin-publis-section" style="<?php echo ($active_tab !== 'publis') ? 'display: none;' : ''; ?>">
         <div class="worldcup-container">
             <div class="worldcup-info">
                 <h3>Título Publicación</h3>
@@ -132,7 +174,7 @@ $userType = $userDetails['userType'];
     </div>
 
     <!-- Sección de Comentarios -->
-    <div id="admin-comments-section" style="display: none;">
+    <div id="admin-comments-section" style="<?php echo ($active_tab !== 'comments') ? 'display: none;' : ''; ?>">
         <div class="worldcup-container">
             <div class="worldcup-info comment">
                 <h4>Comentario de: <span class="user-publish" style="font-weight: bold;">Usuario Ejemplo</span></h4>
@@ -153,8 +195,18 @@ $userType = $userDetails['userType'];
     </div>
 
     <!-- Sección de Creación -->
-    <div id="admin-create-section" style="display: none;">
+    <div id="admin-create-section" style="<?php echo ($active_tab !== 'create') ? 'display: none;' : ''; ?>">
         <!-- Formulario para Crear Mundial -->
+        <?php if (!empty($feedback_message)): ?>
+            <div class="worldcup-container">
+                <div class="worldcup-info" style="background-color: <?php echo $feedback_type === 'success' ? '#28a745' : '#dc3545'; ?>; color: white; text-align: center;">
+                    <p><?php echo htmlspecialchars($feedback_message); ?></p>
+                </div>
+            </div>
+        <?php endif; ?>
+
+
+
         <div class="worldcup-container">
             <div class="worldcup-info">
                 <h3><i class="fas fa-trophy"></i> Crear Nuevo Mundial</h3>
@@ -190,23 +242,23 @@ $userType = $userDetails['userType'];
         <div class="worldcup-container">
             <div class="worldcup-info">
                 <h3><i class="fas fa-tags"></i> Crear Nueva Categoría</h3>
-                <form class="admin-form">
+                <form class="admin-form" method="POST" enctype="multipart/form-data">
                     <div class="form-group">
                         <label for="categoria-imagen">Imagen de la Categoría</label>
-                        <input type="file" id="categoria-imagen" class="form-input-file" accept="image/*">
+                        <input type="file" id="categoria-imagen" name="categoria_imagen" class="form-input-file" accept="image/*" required>
                         <label for="categoria-imagen"><i class="fas fa-upload"></i> Seleccionar Imagen</label>
                         <div class="media-preview" id="categoria-imagen-preview"></div>
                     </div>
                     <div class="form-group">
                         <label for="categoria-nombre">Nombre de la Categoría</label>
-                        <input type="text" id="categoria-nombre" class="form-input-text" placeholder="Ej: Goles Memorables">
+                        <input type="text" id="categoria-nombre" name="categoria_nombre" class="form-input-text" placeholder="Ej: Goles Memorables" required>
                     </div>
                     <div class="form-group">
                         <label for="categoria-desc">Descripción</label>
-                        <textarea id="categoria-desc" class="form-input-textarea" placeholder="Describe de qué trata la categoría..."></textarea>
+                        <textarea id="categoria-desc" name="categoria_desc" class="form-input-textarea" placeholder="Describe de qué trata la categoría..." required></textarea>
                     </div>
                     <div class="post-actions">
-                        <button type="submit" class="action-btn like-btn">
+                        <button type="submit" name="create_category" class="action-btn like-btn">
                             <i class="fas fa-save"></i> Guardar Categoría
                         </button>
                     </div>
@@ -218,39 +270,6 @@ $userType = $userDetails['userType'];
 </div>
 <script src="../javascript/inicio.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const btnPublis = document.getElementById('btn-show-publis');
-    const btnComments = document.getElementById('btn-show-comments');
-    const btnCreate = document.getElementById('btn-show-create');
-
-    const sectionPublis = document.getElementById('admin-publis-section');
-    const sectionComments = document.getElementById('admin-comments-section');
-    const sectionCreate = document.getElementById('admin-create-section');
-
-    const buttons = [btnPublis, btnComments, btnCreate];
-    const sections = [sectionPublis, sectionComments, sectionCreate];
-
-    function toggleSections(activeBtn, activeSection) {
-        buttons.forEach(btn => btn.classList.remove('active'));
-        sections.forEach(sec => sec.style.display = 'none');
-
-        activeBtn.classList.add('active');
-        activeSection.style.display = 'block';
-    }
-
-    btnPublis.addEventListener('click', () => {
-        toggleSections(btnPublis, sectionPublis);
-    });
-
-    btnComments.addEventListener('click', () => {
-        toggleSections(btnComments, sectionComments);
-    });
-
-    btnCreate.addEventListener('click', () => {
-        toggleSections(btnCreate, sectionCreate);
-    });
-});
-
 function setupImagePreview(inputId, previewId) {
     const input = document.getElementById(inputId);
     const previewContainer = document.getElementById(previewId);
@@ -275,6 +294,30 @@ function setupImagePreview(inputId, previewId) {
 document.addEventListener('DOMContentLoaded', function () {
     setupImagePreview('mundial-logo', 'mundial-logo-preview');
     setupImagePreview('categoria-imagen', 'categoria-imagen-preview');
+
+    const btnPublis = document.getElementById('btn-show-publis');
+    const btnComments = document.getElementById('btn-show-comments');
+    const btnCreate = document.getElementById('btn-show-create');
+
+    const sectionPublis = document.getElementById('admin-publis-section');
+    const sectionComments = document.getElementById('admin-comments-section');
+    const sectionCreate = document.getElementById('admin-create-section');
+
+    const buttons = [btnPublis, btnComments, btnCreate];
+    const sections = [sectionPublis, sectionComments, sectionCreate];
+
+    function toggleSections(activeBtn, activeSection) {
+        buttons.forEach(btn => btn.classList.remove('active'));
+        sections.forEach(sec => sec.style.display = 'none');
+
+        activeBtn.classList.add('active');
+        activeSection.style.display = 'block';
+    }
+
+    // El estado inicial ya se establece con PHP, estos listeners son para los clics del usuario
+    btnPublis.addEventListener('click', () => toggleSections(btnPublis, sectionPublis));
+    btnComments.addEventListener('click', () => toggleSections(btnComments, sectionComments));
+    btnCreate.addEventListener('click', () => toggleSections(btnCreate, sectionCreate));
 });
 </script>
 <!-- Footer -->

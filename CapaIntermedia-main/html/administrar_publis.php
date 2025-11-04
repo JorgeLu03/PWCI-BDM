@@ -11,9 +11,18 @@ $displayName = $userDetails['displayName'];
 $photoSrc = $userDetails['photoSrc'];
 $userType = $userDetails['userType'];
 
-$feedback_message = '';
-$feedback_type = ''; // 'success' o 'error'
-$active_tab = 'publis'; // Pestaña activa por defecto
+// --- Lógica para mensajes de feedback y pestaña activa ---
+$feedback_message = $_SESSION['feedback_message'] ?? '';
+$feedback_type = $_SESSION['feedback_type'] ?? '';
+unset($_SESSION['feedback_message'], $_SESSION['feedback_type']); // Limpiar para que no se muestre de nuevo
+
+// Determinar la pestaña activa. Si venimos de una redirección, usamos el parámetro GET.
+if (isset($_GET['tab'])) {
+    $active_tab = $_GET['tab'];
+} else {
+    $active_tab = 'publis'; // Pestaña por defecto si no se especifica
+}
+
 
 // --- Lógica para crear una nueva categoría ---
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['create_category'])) {
@@ -35,22 +44,88 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['create_category'])) {
                 $stmt->send_long_data(2, $imagen_data); // Enviar el BLOB
 
                 if ($stmt->execute()) {
-                    $feedback_message = "¡Categoría creada con éxito!";
-                    $feedback_type = 'success';
+                    $_SESSION['feedback_message'] = "¡Categoría creada con éxito!";
+                    $_SESSION['feedback_type'] = 'success';
                 } else {
-                    $feedback_message = "Error al crear la categoría: " . $stmt->error;
-                    $feedback_type = 'error';
+                    $_SESSION['feedback_message'] = "Error al crear la categoría: " . $stmt->error;
+                    $_SESSION['feedback_type'] = 'error';
                 }
                 $stmt->close();
             } else {
-                $feedback_message = "Error al preparar la consulta: " . $conn->error;
-                $feedback_type = 'error';
+                $_SESSION['feedback_message'] = "Error al preparar la consulta: " . $conn->error;
+                $_SESSION['feedback_type'] = 'error';
             }
         }
     } else {
-        $feedback_message = "Por favor, completa todos los campos, incluyendo la imagen.";
-        $feedback_type = 'error';
+        $_SESSION['feedback_message'] = "Por favor, completa todos los campos, incluyendo la imagen.";
+        $_SESSION['feedback_type'] = 'error';
     }
+    // Redirigir para evitar reenvío del formulario
+    header("Location: " . $_SERVER['PHP_SELF'] . "?tab=create");
+    exit();
+}
+
+// --- Lógica para crear un nuevo Mundial ---
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['create_mundial'])) {
+    $active_tab = 'create';
+    
+    // Recoger todos los datos del formulario
+    $nombre = $_POST['mundial_nombre'] ?? '';
+    $anio = $_POST['mundial_anio'] ?? '';
+    $descripcion = $_POST['mundial_resena'] ?? '';
+    $sedes = $_POST['mundial_sedes'] ?? '';
+    $balon = $_POST['mundial_balon'] ?? '';
+    $campeon = $_POST['mundial_campeon'] ?? '';
+    $subcampeon = $_POST['mundial_subcampeon'] ?? '';
+    $tercer_lugar = $_POST['mundial_tercer_lugar'] ?? '';
+    $cuarto_lugar = $_POST['mundial_cuarto_lugar'] ?? '';
+    $final_fecha = $_POST['mundial_final_fecha'] ?? '';
+    $final_lugar = $_POST['mundial_final_lugar'] ?? '';
+    $marcador_final = $_POST['mundial_marcador'] ?? '';
+    $tiempo_extra = $_POST['mundial_tiempo_extra'] ?? 0;
+    $goleador = $_POST['mundial_goleador'] ?? '';
+    $alineacion = $_POST['mundial_alineacion'] ?? '';
+    $cantante = $_POST['mundial_cantante'] ?? null;
+    $id_user = $_SESSION['user_id'] ?? 0;
+
+    // Leer datos de las imágenes
+    $logo_data = (isset($_FILES['mundial_logo']) && $_FILES['mundial_logo']['error'] == 0) ? file_get_contents($_FILES['mundial_logo']['tmp_name']) : null;
+    $banner_data = (isset($_FILES['mundial_banner']) && $_FILES['mundial_banner']['error'] == 0) ? file_get_contents($_FILES['mundial_banner']['tmp_name']) : null;
+
+    $stmt = $conn->prepare("CALL SP_NewMundial(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    if ($stmt) { 
+        // La cadena de tipos debe coincidir con los 19 parámetros del SP:
+        // 1. Enlazamos todos los parámetros excepto los BLOBs. Para los BLOBs, pasamos NULL.
+        $null = NULL;
+    // La cadena de tipos debe coincidir con los 19 parámetros del SP.
+    // 1:s, 2:i (año), 3:s, 4:i (ID_User), 5:s (Sede), ..., 14:i (TiempoExtra), 18:b (Logo), 19:b (Banner)
+    $stmt->bind_param('sisisssssssssisssbb', $nombre, $anio, $descripcion, $id_user, $sedes, $balon, $campeon, $subcampeon, $tercer_lugar, $cuarto_lugar, $final_fecha, $final_lugar, $marcador_final, $tiempo_extra, $goleador, $alineacion, $cantante, $null, $null);
+        
+        // 2. Enviamos los datos BLOB por separado si existen.
+        // El índice es 0-based. El 18º parámetro es el logo (índice 17).
+        if ($logo_data) {
+            $stmt->send_long_data(17, $logo_data);
+        }
+        // El 19º parámetro es el banner (índice 18).
+        if ($banner_data) {
+            $stmt->send_long_data(18, $banner_data);
+        }
+        
+        if ($stmt->execute()) {
+            $_SESSION['feedback_message'] = "¡Mundial creado con éxito!";
+            $_SESSION['feedback_type'] = 'success';
+        } else {
+            $_SESSION['feedback_message'] = "Error al crear el mundial: " . $stmt->error;
+            $_SESSION['feedback_type'] = 'error';
+        }
+        $stmt->close();
+    } else {
+        $_SESSION['feedback_message'] = "Error al preparar la consulta: " . $conn->error;
+        $_SESSION['feedback_type'] = 'error';
+    }
+    // Redirigir para evitar reenvío del formulario
+    header("Location: " . $_SERVER['PHP_SELF'] . "?tab=create");
+    exit();
 }
 ?>
 <!DOCTYPE html>
@@ -210,27 +285,99 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['create_category'])) {
         <div class="worldcup-container">
             <div class="worldcup-info">
                 <h3><i class="fas fa-trophy"></i> Crear Nuevo Mundial</h3>
-                <form class="admin-form">
+                <form class="admin-form" method="POST" enctype="multipart/form-data">
                     <div class="form-group">
-                        <label for="mundial-logo">Logotipo del Mundial</label>
-                        <input type="file" id="mundial-logo" class="form-input-file" accept="image/*">
+                        <label for="mundial-logo">Logo</label>
+                        <input type="file" id="mundial-logo" name="mundial_logo" class="form-input-file" accept="image/*">
                         <label for="mundial-logo"><i class="fas fa-upload"></i> Seleccionar Logotipo</label>
                         <div class="media-preview" id="mundial-logo-preview"></div>
                     </div>
                     <div class="form-group">
-                        <label for="mundial-nombre">Nombre del Mundial</label>
-                        <input type="text" id="mundial-nombre" class="form-input-text" placeholder="Ej: Mundial 2026 - Norteamérica">
+                        <label for="mundial-banner">Banner</label>
+                        <input type="file" id="mundial-banner" name="mundial_banner" class="form-input-file" accept="image/*">
+                        <label for="mundial-banner"><i class="fas fa-upload"></i> Seleccionar Banner</label>
+                        <div class="media-preview" id="mundial-banner-preview"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="mundial-nombre">Nombre del mundial</label>
+                        <input type="text" id="mundial-nombre" name="mundial_nombre" class="form-input-text" placeholder="Ej: Mundial 2026 - Norteamérica" required>
                     </div>
                     <div class="form-group">
                         <label for="mundial-anio">Año</label>
-                        <input type="number" id="mundial-anio" class="form-input-text" placeholder="Ej: 2026">
+                        <input type="number" id="mundial-anio" name="mundial_anio" class="form-input-text" placeholder="Ej: 2026" required>
                     </div>
                     <div class="form-group">
-                        <label for="mundial-resena">Breve Reseña</label>
-                        <textarea id="mundial-resena" class="form-input-textarea" placeholder="Describe brevemente el mundial..."></textarea>
+                        <label for="mundial-resena">Descripción</label>
+                        <textarea id="mundial-resena" name="mundial_resena" class="form-input-textarea" placeholder="Describe brevemente el mundial..." required></textarea>
                     </div>
+                    <div class="form-group">
+                        <label for="mundial-sedes">Sedes</label>
+                        <input type="text" id="mundial-sedes" name="mundial_sedes" class="form-input-text" placeholder="Ej: Ciudad de México, Guadalajara, Monterrey" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="mundial-balon">Balón oficial</label>
+                        <input type="text" id="mundial-balon" name="mundial_balon" class="form-input-text" placeholder="Ej: Adidas Telstar" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="mundial-campeon">Campeón</label>
+                        <input type="text" id="mundial-campeon" name="mundial_campeon" class="form-input-text" placeholder="Ej: Argentina" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="mundial-subcampeon">Subcampeón</label>
+                        <input type="text" id="mundial-subcampeon" name="mundial_subcampeon" class="form-input-text" placeholder="Ej: Francia" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="mundial-tercer-lugar">Tercer lugar</label>
+                        <input type="text" id="mundial-tercer-lugar" name="mundial_tercer_lugar" class="form-input-text" placeholder="Ej: Croacia" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="mundial-cuarto-lugar">Cuarto lugar</label>
+                        <input type="text" id="mundial-cuarto-lugar" name="mundial_cuarto_lugar" class="form-input-text" placeholder="Ej: Marruecos" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="mundial-final-fecha">Fecha de la final</label>
+                        <input type="date" id="mundial-final-fecha" name="mundial_final_fecha" class="form-input-text" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="mundial-final-lugar">Lugar de la final</label>
+                        <input type="text" id="mundial-final-lugar" name="mundial_final_lugar" class="form-input-text" placeholder="Ej: Estadio Lusail, Catar" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="mundial-marcador">Marcador final</label>
+                        <input type="text" id="mundial-marcador" name="mundial_marcador" class="form-input-text" placeholder="Ej: 3-3 (4-2 pen.)" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="mundial-tiempo-extra">¿Hubo tiempo extra?</label>
+                        <select id="mundial-tiempo-extra" name="mundial_tiempo_extra" class="form-input-text" required>
+                            <option value="0">No</option>
+                            <option value="1">Sí</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="mundial-goleador">Goleador del torneo</label>
+                        <input type="text" id="mundial-goleador" name="mundial_goleador" class="form-input-text" placeholder="Ej: Kylian Mbappé (8 goles)" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="mundial-alineacion">Alineación del equipo campeón</label>
+                        <select id="mundial-alineacion" name="mundial_alineacion" class="form-input-text" required>
+                            <option value="">-- Selecciona una alineación --</option>
+                            <option value="4-4-2">4-4-2</option>
+                            <option value="4-3-3">4-3-3</option>
+                            <option value="4-5-1">4-5-1</option>
+                            <option value="3-5-2">3-5-2</option>
+                            <option value="3-4-3">3-4-3</option>
+                            <option value="5-3-2">5-3-2</option>
+                            <option value="4-2-3-1">4-2-3-1</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="mundial-cantante">Cantante(Opcional)</label>
+                        <input type="text" id="mundial-cantante" name="mundial_cantante" class="form-input-text" placeholder="Ej: Shakira, Maluma">
+                    </div>
+
                     <div class="post-actions">
-                        <button type="submit" class="action-btn like-btn">
+                        <button type="submit" name="create_mundial" class="action-btn like-btn">
                             <i class="fas fa-save"></i> Guardar Mundial
                         </button>
                     </div>
@@ -293,6 +440,7 @@ function setupImagePreview(inputId, previewId) {
 
 document.addEventListener('DOMContentLoaded', function () {
     setupImagePreview('mundial-logo', 'mundial-logo-preview');
+    setupImagePreview('mundial-banner', 'mundial-banner-preview');
     setupImagePreview('categoria-imagen', 'categoria-imagen-preview');
 
     const btnPublis = document.getElementById('btn-show-publis');

@@ -8,6 +8,14 @@ $userDetails = getUserDetails($conn);
 $displayName = $userDetails['displayName'];
 $photoSrc = $userDetails['photoSrc'];
 $userType = $userDetails['userType'];
+
+// --- Lógica para obtener todos los mundiales ---
+$mundiales = [];
+// Usamos la vista V_Mundiales para obtener los datos, ordenados por año descendente
+$result = $conn->query("SELECT ID_Mundial, Nombre, Descripcion, Logo FROM V_Mundiales ORDER BY Anio DESC");
+if ($result) {
+    $mundiales = $result->fetch_all(MYSQLI_ASSOC);
+}
 ?>
 <!DOCTYPE html>
 
@@ -95,50 +103,31 @@ $userType = $userDetails['userType'];
 <h2 class="section-title"><i class="fas fa-trophy"></i> Mundiales</h2>
 <section class="infografia" id="infografia">
 <div class="cards-grid" style="padding-top: 1rem;">
-<a class="card-link" href="inicio.php?worldcup=2022">
-<article class="card publication-card">
-    <div class="publication-card-media">
-        <img alt="Logo Mundial Qatar 2022" src="../css/PlaceHolder3.png"/>
-    </div>
-    <div class="publication-card-content">
-        <h3>Qatar 2022</h3>
-        <p>La primera Copa del Mundo celebrada en el mundo árabe, llena de sorpresas y con una final inolvidable.</p>
-    </div>
-</article>
-</a>
-<a class="card-link" href="inicio.php?worldcup=2018">
-<article class="card publication-card">
-    <div class="publication-card-media">
-        <img alt="Logo Mundial Rusia 2018" src="../css/PlaceHolder3.png"/>
-    </div>
-    <div class="publication-card-content">
-        <h3>Rusia 2018</h3>
-        <p>Francia se coronó campeona en un torneo marcado por la introducción del VAR y grandes actuaciones.</p>
-    </div>
-</article>
-</a>
-<a class="card-link" href="inicio.php?worldcup=2014">
-<article class="card publication-card">
-    <div class="publication-card-media">
-        <img alt="Logo Mundial Brasil 2014" src="../css/PlaceHolder3.png"/>
-    </div>
-    <div class="publication-card-content">
-        <h3>Brasil 2014</h3>
-        <p>Alemania levantó el trofeo en un mundial recordado por el 7-1 a Brasil y la pasión de Sudamérica.</p>
-    </div>
-</article>
-</a>
-<a class="card-link" href="inicio.php?worldcup=2010">
-<article class="card publication-card">
-    <div class="publication-card-media">
-        <img alt="Logo Mundial Sudáfrica 2010" src="../css/PlaceHolder3.png"/>
-    </div>
-    <div class="publication-card-content">
-        <h3>Sudáfrica 2010</h3>
-        <p>El primer mundial en África, donde España consiguió su primera estrella al ritmo de las vuvuzelas.</p>
-    </div>
-</article>
-</a>
+    <?php if (count($mundiales) > 0): ?>
+        <?php foreach ($mundiales as $mundial): ?>
+            <?php
+                // Determinar la fuente de la imagen del logo
+                $logoSrc = '../css/PlaceHolder3.png'; // Imagen por defecto
+                if (!empty($mundial['Logo'])) {
+                    // Convertir los datos BLOB a una Data URI para mostrar la imagen
+                    $logoSrc = 'data:image/png;base64,' . base64_encode($mundial['Logo']);
+                }
+            ?>
+            <a class="card-link" href="mundial_detalle.php?id=<?php echo htmlspecialchars($mundial['ID_Mundial']); ?>">
+                <article class="card publication-card">
+                    <div class="publication-card-media">
+                        <img alt="Logo <?php echo htmlspecialchars($mundial['Nombre']); ?>" src="<?php echo $logoSrc; ?>"/>
+                    </div>
+                    <div class="publication-card-content">
+                        <h3><?php echo htmlspecialchars($mundial['Nombre']); ?></h3>
+                        <p><?php echo htmlspecialchars(substr($mundial['Descripcion'], 0, 100)) . '...'; ?></p>
+                    </div>
+                </article>
+            </a>
+        <?php endforeach; ?>
+    <?php else: ?>
+        <p style="text-align: center; width: 100%; padding: 2rem;">Aún no se han registrado mundiales. ¡Crea el primero desde el panel de administración!</p>
+    <?php endif; ?>
 </div>
 </section>
 </main>

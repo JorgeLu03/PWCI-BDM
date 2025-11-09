@@ -10,6 +10,73 @@ $userDetails = getUserDetails($conn);
 $displayName = $userDetails['displayName'];
 $photoSrc = $userDetails['photoSrc'];
 $userType = $userDetails['userType'];
+
+// --- Lógica para obtener la publicación ---
+$publi_id = $_GET['id'] ?? 0;
+$publication = null;
+$like_count = 0;
+$user_has_liked = false;
+$current_user_id = $_SESSION['user_id'] ?? 0;
+$comments = []; // Array para guardar los comentarios
+
+if ($publi_id > 0) {
+    // --- Incrementar el contador de vistas ---
+    // Se llama al procedimiento almacenado que ya tienes: ACTUALIZAR_VISTAS.
+    $stmt_views = $conn->prepare("CALL ACTUALIZAR_VISTAS(?)");
+    if ($stmt_views) {
+        $stmt_views->bind_param('i', $publi_id);
+        $stmt_views->execute();
+        $stmt_views->close();
+        // Limpiar resultados para la siguiente consulta
+        while ($conn->more_results() && $conn->next_result()) {;}
+    }
+
+    // Usamos un procedimiento almacenado para obtener los detalles de la publicación. Asegúrate que devuelve TipoMultimedia.
+    $stmt = $conn->prepare("CALL Mostrar_Publicacion_Especifica(?)"); // Esta consulta se ejecuta después de actualizar la vista.
+    if ($stmt) {
+        $stmt->bind_param('i', $publi_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($result->num_rows > 0) {
+            $publication = $result->fetch_assoc();
+        }
+        $stmt->close();
+        while ($conn->more_results() && $conn->next_result()) {;}
+    }
+
+    // --- Obtener conteo de "Me gusta" y si el usuario actual le dio "Me gusta" ---
+    $stmt_likes = $conn->prepare("CALL SP_GetLikeCount(?)");
+    if ($stmt_likes) {
+        $stmt_likes->bind_param('i', $publi_id);
+        $stmt_likes->execute();
+        $like_count = $stmt_likes->get_result()->fetch_assoc()['like_count'];
+        $stmt_likes->close();
+        while ($conn->more_results() && $conn->next_result()) {;}
+    }
+    if ($current_user_id > 0) {
+        $stmt_check = $conn->prepare("CALL SP_CheckUserLike(?, ?)");
+        $stmt_check->bind_param('ii', $current_user_id, $publi_id);
+        $stmt_check->execute();
+        $user_has_liked = $stmt_check->get_result()->fetch_assoc()['user_liked'] > 0;
+        $stmt_check->close();
+    }
+
+    // --- Obtener los comentarios de la publicación ---
+    $stmt_comments = $conn->prepare("CALL SP_GetCommentsByPost(?)");
+    if ($stmt_comments) {
+        $stmt_comments->bind_param('i', $publi_id);
+        $stmt_comments->execute();
+        $result_comments = $stmt_comments->get_result();
+        $comments = $result_comments->fetch_all(MYSQLI_ASSOC);
+        $stmt_comments->close();
+    }
+}
+
+// Si no se encuentra la publicación, redirigir o mostrar un error
+if ($publication === null) {
+    header("Location: inicio.php");
+    exit();
+}
 ?>
 <!DOCTYPE html>
 
@@ -39,7 +106,52 @@ $userType = $userDetails['userType'];
 .header-search button{padding:6px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.15);background:#fff;cursor:pointer}
 /* Ensure profile bubble stands alone */
 .header-profile-link{display:inline-block;text-decoration:none}
-</style></head>
+</style>
+<style data-injected="comment-styles">
+    .comment-author {
+        display: flex;
+        align-items: center;
+        gap: 12px; /* Espacio entre la foto y el nombre */
+        margin-bottom: 1rem;
+    }
+    .comment-author img {
+        width: 45px; /* Tamaño pequeño */
+        height: 45px; /* Mismo tamaño para que sea un círculo perfecto */
+        border-radius: 50%; /* Esto hace la imagen circular */
+        object-fit: cover; /* Asegura que la imagen llene el círculo sin deformarse */
+        border: 2px solid #f0f0f0; /* Un borde sutil opcional */
+    }
+    .comment-author h3 {
+        margin: 0;
+        font-size: 1.1rem;
+    }
+    .comment-author .comment-date {
+        margin-left: auto; /* Empuja la fecha hacia la derecha */
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+</style>
+<style data-injected="toast-notification">
+    .toast-notification {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #28a745;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        z-index: 1050;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        opacity: 0;
+        transition: opacity 0.5s, bottom 0.5s;
+    }
+    .toast-notification.show {
+        opacity: 1;
+        bottom: 40px;
+    }
+</style>
+</head>
 <body>
 <!-- Barra superior - Mundial 2026 -->
 <header class="header">
@@ -97,54 +209,183 @@ $userType = $userDetails['userType'];
 <!-- Publicacion  -->
 <div class="worldcup-container">
 <div class="worldcup-info">
-<h3>Título Publicación</h3>
+<h3><?php echo htmlspecialchars($publication['Titulo']); ?></h3>
 <div class="post-meta">
-<span class="user-publish">Usuario</span>
+<span class="user-publish"><?php echo htmlspecialchars($publication['Nombre_Usuario']); ?></span>
 <span class="separator">|</span>
-<span class="user-publish">Fecha</span>
+<span class="user-publish"><?php echo date("d M, Y", strtotime($publication['Fec_pub'])); ?></span>
 <span class="separator">|</span>
-<span class="user-publish">Categoria</span>
+<span class="user-publish"><?php echo htmlspecialchars($publication['Nombre_Categoria']); ?></span>
 <span class="separator">|</span>
-<span class="user-publish">Mundial</span>
+<span class="user-publish"><?php echo htmlspecialchars($publication['Nombre_Mundial']); ?></span>
 </div>
-<p>El torneo de fútbol más grande del mundo llega a Norteamérica...</p>
-<div class="media-container">
-<img alt="Foto" class="publish-media" src="../css/PlaceHolder3.png"/>
-<video class="publish-media" controls="">
-<source src="../css/PlaceHolder3.mp4" type="video/mp4"/>
-</video>
+<p><?php echo nl2br(htmlspecialchars($publication['Descripcion'])); ?></p>
+<?php if (!empty($publication['Multimedia']) && !empty($publication['TipoMultimedia'])): ?>
+    <div class="media-container">
+        <?php
+            $media_type = $publication['TipoMultimedia'];
+            $media_src = 'data:' . $media_type . ';base64,' . base64_encode($publication['Multimedia']);
+        ?>
+        <?php if (strpos($media_type, 'image/') === 0): ?>
+            <img alt="Multimedia de la publicación" class="publish-media" src="<?php echo $media_src; ?>"/>
+        <?php elseif (strpos($media_type, 'video/') === 0): ?>
+            <video class="publish-media" controls autoplay loop>
+                <source src="<?php echo $media_src; ?>" type="<?php echo $media_type; ?>">
+                Tu navegador no soporta la etiqueta de video.
+            </video>
+        <?php endif; ?>
+    </div>
+<?php endif; ?>
 </div>
-</div>
-<div class="post-actions">
-<button class="action-btn like-btn">
-<i class="fas fa-heart"></i> Me gusta
-                        <span class="like-count">0</span>
-</button>
-<!-- <button class="action-btn comment-btn" href="#commentsSection">
-                        <i class="fas fa-comment"></i> Comentar
-                    </button> -->
+<div class="post-actions" data-publi-id="<?php echo $publi_id; ?>">
+    <button class="action-btn like-btn <?php echo $user_has_liked ? 'liked' : ''; ?>">
+        <i class="fas fa-heart"></i> Me gusta
+        <span class="like-count"><?php echo $like_count; ?></span>
+    </button>
 </div>
 </div>
 <!-- Formulario para nuevo comentario -->
 <div class="worldcup-container">
     <div class="worldcup-info comment-form-container">
-        <h3>Deja un comentario</h3>
-        <form id="comment-form">
-            <textarea placeholder="Escribe tu comentario aquí..." required></textarea>
-            <button type="submit" class="action-btn">Publicar Comentario</button>
-        </form>
+        <h3><i class="fas fa-comment-dots"></i> Deja un comentario</h3>
+        <?php if ($current_user_id > 0): ?>
+            <form id="comment-form" data-publi-id="<?php echo $publi_id; ?>">
+                <textarea name="content" placeholder="Escribe tu comentario aquí..." required></textarea>
+                <button type="submit" class="action-btn">Publicar Comentario</button>
+            </form>
+        <?php else: ?>
+            <p>Debes <a href="Iniciar_sesion.php">iniciar sesión</a> para poder comentar.</p>
+        <?php endif; ?>
     </div>
 </div>
 
 <!-- Comentarios: -->
-<div class="worldcup-container">
-<div class="worldcup-info comment">
-<h3>Usuario Comentario</h3>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-</div>
+<div id="comments-section">
+    <?php if (count($comments) > 0): ?>
+        <?php foreach ($comments as $comment): ?>
+            <div class="worldcup-container">
+                <div class="worldcup-info comment">
+                    <div class="comment-author">
+                        <img src="<?php echo !empty($comment['FotoUsuario']) ? 'data:image/jpeg;base64,' . base64_encode($comment['FotoUsuario']) : '../css/user-default.png'; ?>" alt="Foto de perfil">
+                        <h3><?php echo htmlspecialchars($comment['NombreUsuario']); ?></h3>
+                        <span class="comment-date"><?php echo date("d M, Y \a \l\a\s H:i", strtotime($comment['Fec'])); ?></span>
+                    </div>
+                    <p><?php echo nl2br(htmlspecialchars($comment['Contenido'])); ?></p>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    <?php else: ?>
+        <p id="no-comments-message" style="text-align: center; padding: 2rem;">Aún no hay comentarios. ¡Sé el primero en comentar!</p>
+    <?php endif; ?>
 </div>
 </main>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const likeButton = document.querySelector('.like-btn');
+    const commentForm = document.getElementById('comment-form');
+
+    if (likeButton) {
+        likeButton.addEventListener('click', function() {
+            const postActionsContainer = this.closest('.post-actions');
+            const publiId = postActionsContainer.dataset.publiId;
+            const likeCountSpan = this.querySelector('.like-count');
+
+            // Preparar los datos para enviar
+            const formData = new FormData();
+            formData.append('publi_id', publiId);
+
+            // Enviar la petición AJAX
+            fetch('like_handler.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Actualizar el contador de "Me gusta"
+                    likeCountSpan.textContent = data.new_like_count;
+
+                    // Alternar la clase 'liked' para cambiar el estilo del botón
+                    if (data.like_status === 'liked') {
+                        this.classList.add('liked');
+                    } else {
+                        this.classList.remove('liked');
+                    }
+                } else {
+                    alert('Error: ' + (data.error || 'No se pudo procesar la solicitud. Inicia sesión para dar Me Gusta.'));
+                }
+            })
+            .catch(error => console.error('Error en la petición fetch:', error));
+        });
+    }
+
+    if (commentForm) {
+        commentForm.addEventListener('submit', function(e) {
+            e.preventDefault(); // Evitar que la página se recargue
+
+            const publiId = this.dataset.publiId;
+            const contentTextarea = this.querySelector('textarea');
+            const content = contentTextarea.value.trim();
+
+            if (content === '') {
+                alert('Por favor, escribe un comentario.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('publi_id', publiId);
+            formData.append('content', content);
+
+            fetch('comment_handler.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Limpiar el textarea
+                    contentTextarea.value = '';
+                    // Mostrar la notificación "toast"
+                    showToast(data.message);
+                } else {
+                    alert('Error al publicar el comentario: ' + (data.error || 'Ocurrió un problema.'));
+                }
+            })
+            .catch(error => {
+                console.error('Error en la petición de comentario:', error);
+                alert('Error de conexión al intentar publicar el comentario.');
+            });
+        });
+    }
+
+    function showToast(message) {
+        const toast = document.createElement('div');
+        toast.className = 'toast-notification';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        // Mostrar el toast
+        setTimeout(() => {
+            toast.classList.add('show');
+        }, 100);
+
+        // Ocultar y eliminar el toast después de 3 segundos
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 500);
+        }, 3000);
+    }
+
+    // Función para escapar HTML y prevenir ataques XSS
+    function escapeHTML(str) {
+        const div = document.createElement('div');
+        div.appendChild(document.createTextNode(str));
+        return div.innerHTML;
+    }
+
+});
+</script>
 <script src="../javascript/inicio.js"></script>
 <!-- Footer -->
 <footer class="footer">

@@ -3,10 +3,10 @@ session_start();
 
 // --- Restringir acceso a usuarios no logueados ---
 if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
-    // Si el usuario no ha iniciado sesión, redirigirlo a la página de login.
     header('Location: Iniciar_sesion.php');
-    exit(); // Detener la ejecución del script después de redirigir.
+    exit();
 }
+
 require_once '../BD/Connection/Connection.php';
 require_once '../BD/Querys/user_functions.php';
 
@@ -16,150 +16,108 @@ $photoSrc = $userDetails['photoSrc'];
 $userType = $userDetails['userType'];
 
 $error_message = '';
-$success_message = '';
+$publi_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+$user_id = (int)$_SESSION['user_id'];
 
+if ($publi_id <= 0) {
+    header('Location: mis_publicaciones.php');
+    exit();
+}
+
+// --- Obtener datos de la publicación para editar ---
+$stmt_get = $conn->prepare("CALL SP_GetPublicationForEdit(?, ?)");
+if (!$stmt_get) {
+    die("Error al preparar la consulta para obtener la publicación: " . $conn->error);
+}
+$stmt_get->bind_param('ii', $publi_id, $user_id);
+$stmt_get->execute();
+$result_get = $stmt_get->get_result();
+if ($result_get->num_rows === 0) {
+    // El usuario no es el dueño o la publicación no está rechazada
+    header('Location: mis_publicaciones.php');
+    exit();
+}
+$pub_data = $result_get->fetch_assoc();
+$stmt_get->close();
+while ($conn->more_results() && $conn->next_result()) {;}
+
+
+// --- Lógica para actualizar la publicación ---
 if ($_SERVER["REQUEST_METHOD"] === 'POST') {
-    // 1. Capturar y definir datos (asegúrate de que todos están aquí)
     $Titulo_P = $_POST['Titulo'] ?? '';
     $Descripcion_P = $_POST['Descripcion'] ?? '';
-    $ID_Categ_P = (int)($_POST['ID_categ'] ?? 0); // Aseguramos que sea INT
-    $ID_Mundial_P = (int)($_POST['ID_Mundial'] ?? 0); // Aseguramos que sea INT
-    
-    // Valores por defecto
-    $Estatus_P = 1; 
-    $Views_P = 0;
-    $Fec_aprob_P = NULL;
-    $Fec_pub = date('Y-m-d');
-    $ID_Use_P = (int) ($_SESSION['user_id'] ?? 0);
+    $ID_Categ_P = (int)($_POST['ID_categ'] ?? 0);
+    $ID_Mundial_P = (int)($_POST['ID_Mundial'] ?? 0);
 
-    // 2. Validación de campos obligatorios
     if (empty($Titulo_P) || empty($Descripcion_P) || empty($ID_Categ_P) || empty($ID_Mundial_P)) {
-        $error_message = 'Por favor, completa el título, descripción, categoría y mundial.';
-    } elseif (empty($ID_Use_P)) {
-         $error_message = 'Error de sesión: No se pudo identificar al usuario. Por favor, inicia sesión de nuevo.';
+        $error_message = 'Por favor, completa todos los campos.';
     } else {
-        // --- 3. Manejo de Multimedia (Leer como BLOB) ---
         $multimedia_data = null;
         $multimedia_type = null;
-        
+
         if (isset($_FILES['Multimedia']) && $_FILES['Multimedia']['error'] === UPLOAD_ERR_OK) {
-            // No leemos el archivo aquí todavía. Solo verificamos que existe.
+            $multimedia_type = $_FILES['Multimedia']['type'];
         }
-        
-        // Si no hay errores de validación o subida, intentar la inserción en BD
-        if (empty($error_message)) {
-            // --- 4. Llamada al Procedimiento Almacenado ---
-            $sql_insert = "CALL Insertar_Publicacion(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-            if ($stmt = $conn->prepare($sql_insert)) {
-                // Para enlazar un BLOB, primero se debe enlazar una variable NULL.
-                $null_blob = NULL; 
-                // Tipos: s, s, i, i, s, s, b (Multimedia), s (Tipo), i, i, i.
-                // Enlazamos la variable $null_blob.
-                $stmt->bind_param('ssisssbsiii',
-                    $Titulo_P, 
-                    $Descripcion_P, 
-                    $Estatus_P, 
-                    $Views_P, 
-                    $Fec_aprob_P, 
-                    $Fec_pub, 
-                    $null_blob, 
-                    $multimedia_type,
-                    $ID_Categ_P, 
-                    $ID_Use_P, 
-                    $ID_Mundial_P
-                );
+        $stmt_update = $conn->prepare("CALL SP_UpdatePublication(?, ?, ?, ?, ?, ?, ?)");
+        if ($stmt_update) {
+            $null_blob = NULL;
+            $stmt_update->bind_param('issbsii', 
+                $publi_id, 
+                $Titulo_P, 
+                $Descripcion_P, 
+                $null_blob, 
+                $multimedia_type, 
+                $ID_Categ_P, 
+                $ID_Mundial_P
+            );
 
-                // --- Manejo de BLOB por trozos (chunks) ---
-                if (isset($_FILES['Multimedia']) && $_FILES['Multimedia']['error'] === UPLOAD_ERR_OK) {
-                    $file_path = $_FILES['Multimedia']['tmp_name'];
-                    $multimedia_type = $_FILES['Multimedia']['type']; // Obtenemos el MIME type
-                    $stmt->bind_param('ssisssbsiii', $Titulo_P, $Descripcion_P, $Estatus_P, $Views_P, $Fec_aprob_P, $Fec_pub, $null_blob, $multimedia_type, $ID_Categ_P, $ID_Use_P, $ID_Mundial_P);
-
-                    $fp = fopen($file_path, 'r');
-                    if ($fp) {
-                        // Leemos el archivo en trozos de 8KB y lo enviamos
-                        while (!feof($fp)) {
-                            $chunk = fread($fp, 8192);
-                            // El 7º '?' (índice 6) sigue siendo el BLOB
-                            $stmt->send_long_data(6, $chunk);
-                        }
-                        fclose($fp);
+            if (isset($_FILES['Multimedia']) && $_FILES['Multimedia']['error'] === UPLOAD_ERR_OK) {
+                $file_path = $_FILES['Multimedia']['tmp_name'];
+                $fp = fopen($file_path, 'r');
+                if ($fp) {
+                    while (!feof($fp)) {
+                        $chunk = fread($fp, 8192);
+                        $stmt_update->send_long_data(3, $chunk); // El 4º '?' (índice 3) es el BLOB
                     }
+                    fclose($fp);
                 }
-
-                if ($stmt->execute()) {
-                    // Redirigimos con un parámetro para mostrar la alerta de éxito.
-                    header('Location: crear_publicacion.php?publicado=exitoso');
-                    exit;
-                } else {
-                    // Captura el error de ejecución de la base de datos (Ej: clave foránea)
-                    $error_message = 'Error de Base de Datos al publicar: ' . $stmt->error;
-                }
-                $stmt->close();
-            } else {
-                // Captura el error si falla la preparación de la consulta
-                $error_message = 'Error interno: Fallo al preparar la consulta SQL. ' . $conn->error;
             }
+
+            if ($stmt_update->execute()) {
+                header('Location: mis_publicaciones.php?edit=success');
+                exit;
+            } else {
+                $error_message = 'Error al actualizar la publicación: ' . $stmt_update->error;
+            }
+            $stmt_update->close();
+        } else {
+            $error_message = 'Error al preparar la actualización: ' . $conn->error;
         }
     }
 }
+
+// --- Obtener categorías y mundiales para los selects ---
 $sql_mundial = "CALL Seleccionar_Dato_Condicional(1);";
 $sql_categoria = "CALL Seleccionar_Dato_Condicional(2);";
 
 $categorias = [];
-if ($stmt = $conn->prepare($sql_categoria)) {
-    // Aquí puedes enlazar parámetros si el procedimiento los necesitara, pero es estático (2)
-    
-    if ($stmt->execute()) {
-        $result = $stmt->get_result();
-        // Guardar todas las categorías en un array
-        while ($row = $result->fetch_assoc()) {
-            $categorias[] = $row;
-        }
-        $result->free();
-    } else {
-        // Manejar error de ejecución
-        error_log("Error al ejecutar categorías: " . $stmt->error);
-    }
-    $stmt->close();
-} 
-else {
-    // Manejar error de preparación
-    error_log("Error al preparar categorías: " . $conn->error);
+if ($stmt_cat = $conn->prepare($sql_categoria)) {
+    $stmt_cat->execute();
+    $result_cat = $stmt_cat->get_result();
+    $categorias = $result_cat->fetch_all(MYSQLI_ASSOC);
+    $stmt_cat->close();
 }
-// Limpiar resultados para la siguiente consulta
-while ($conn->more_results() && $conn->next_result()) {
-    // Descartar resultados adicionales
-}
+while ($conn->more_results() && $conn->next_result()) {;}
 
-
-$mundial = [];
-
-if ($stmt = $conn->prepare($sql_mundial)) {
-    // Aquí puedes enlazar parámetros si el procedimiento los necesitara, pero es estático (2)
-    
-    if ($stmt->execute()) {
-        $result = $stmt->get_result();
-        // Guardar todas las categorías en un array
-        while ($row = $result->fetch_assoc()) {
-            $mundial[] = $row;
-        }
-        $result->free();
-    } else {
-        // Manejar error de ejecución
-        error_log("Error al ejecutar mundial: " . $stmt->error);
-    }
-    $stmt->close();
+$mundiales = [];
+if ($stmt_mun = $conn->prepare($sql_mundial)) {
+    $stmt_mun->execute();
+    $result_mun = $stmt_mun->get_result();
+    $mundiales = $result_mun->fetch_all(MYSQLI_ASSOC);
+    $stmt_mun->close();
 }
-else {
-    // Manejar error de preparación
-    error_log("Error al preparar mundial: " . $conn->error);
-}
-// Limpiar resultados para la siguiente consulta (el formulario)
-while ($conn->more_results() && $conn->next_result()) {
-    // Descartar resultados adicionales
-}
+while ($conn->more_results() && $conn->next_result()) {;}
 
 ?>
 <!DOCTYPE html>
@@ -168,9 +126,9 @@ while ($conn->more_results() && $conn->next_result()) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crear Publicación - Mundial 2026</title>
+    <title>Editar Publicación - Mundial 2026</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../css/inicio.css"> <!-- Incluir inicio.css para estilos de header -->
+    <link rel="stylesheet" href="../css/inicio.css">
     <link rel="stylesheet" href="../css/new_publi.css">
     <style data-injected="header-perfil">
         .header-profile-mini{display:inline-flex;align-items:center;gap:10px;padding:6px 10px;background:rgba(255,255,255,0.08);border-radius:999px;border:1px solid rgba(255,255,255,.15)}
@@ -185,21 +143,16 @@ while ($conn->more_results() && $conn->next_result()) {
         .header-profile-link { text-decoration:none; }
     </style>
     <style data-injected="centered-search">
-        /* Centered search in header */
         .header-content{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
         .header-center{flex:1;display:flex;justify-content:center}
         .header-search{display:flex;gap:8px;align-items:center}
         .header-search input[type="search"]{padding:6px 10px;border-radius:999px;border:1px solid rgba(0,0,0,.15);min-width:220px}
         .header-search button{padding:6px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.15);background:#fff;cursor:pointer}
-        /* Ensure profile bubble stands alone */
         .header-profile-link{display:inline-block;text-decoration:none}
     </style>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-<body>
-</head>
-
 <body>
     <!-- Barra superior - Mundial 2026 -->
     <header class="header">
@@ -242,10 +195,7 @@ while ($conn->more_results() && $conn->next_result()) {
             <ul>
                 <li><a href="inicio.php"><i class="fas fa-home"></i> <span>Inicio</span></a></li>
                 <li><a href="mis_publicaciones.php"><i class="fa-solid fa-user"></i> <span>Perfil</span></a></li>
-                 <?php
-                // Comprobar si NO existe la variable de sesión 'user_id' (es decir, NO está logueado)
-                if (!isset($_SESSION['user_id'])): 
-                ?>
+                 <?php if (!isset($_SESSION['user_id'])): ?>
                     <li><a href="Iniciar_sesion.php"><i class="fa-solid fa-right-to-bracket"></i> <span>Iniciar Sesión</span></a></li>
                 <?php endif; ?>
                 <?php if ($userType === 0): ?>
@@ -261,8 +211,8 @@ while ($conn->more_results() && $conn->next_result()) {
         <main class="main-content">
             <div class="publicacion-container">
                 <div class="publicacion-header">
-                    <h2><i class="fas fa-plus-circle"></i> Crear Nueva Publicación</h2>
-                    <p>Comparte noticias, fotos y videos del Mundial 2026</p>
+                    <h2><i class="fas fa-edit"></i> Editar Publicación</h2>
+                    <p>Corrige tu publicación y reenvíala para su aprobación.</p>
                 </div>
 
                 <form class="publicacion-form" method="POST" enctype="multipart/form-data">
@@ -270,24 +220,24 @@ while ($conn->more_results() && $conn->next_result()) {
                     <div class="form-group">
                         <label for="titulo"><i class="fas fa-heading"></i> Título de la publicación</label>
                         <input type="text" id="titulo" name="Titulo" class="form-input"
-                            placeholder="Ej: Argentina gana el partido contra Brasil" required>
+                            placeholder="Ej: Argentina gana el partido contra Brasil" required value="<?php echo htmlspecialchars($pub_data['Titulo']); ?>">
                     </div>
 
                     <!-- Contenido de la publicación -->
                     <div class="form-group">
                         <label for="contenido"><i class="fas fa-align-left"></i> Contenido</label>
                         <textarea id="contenido" name="Descripcion" class="form-textarea" placeholder="Escribe el contenido de tu publicación..."
-                            required></textarea>
+                            required><?php echo htmlspecialchars($pub_data['Descripcion']); ?></textarea>
                     </div>
 
                     <!-- Categoría -->
                     <div class="form-group">
                         <label><i class="fas fa-tag"></i> Categoría</label>
                         <div class="categoria-tags">
-                            <select id="worldCupYear" name="ID_categ" class="categoria-tag">
+                            <select name="ID_categ" class="categoria-tag">
                             <option value="">-- Selecciona la categoria --</option>
                                 <?php foreach ($categorias as $cat): ?>
-                                    <option value="<?php echo htmlspecialchars($cat['ID_categ']); ?>">
+                                    <option value="<?php echo htmlspecialchars($cat['ID_categ']); ?>" <?php echo ($cat['ID_categ'] == $pub_data['ID_Categ']) ? 'selected' : ''; ?>>
                                             <?php echo htmlspecialchars($cat['Nombre']); ?>
                                     </option>
                                 <?php endforeach; ?>
@@ -299,78 +249,74 @@ while ($conn->more_results() && $conn->next_result()) {
                     <div class="form-group">
                         <label><i class="fas fa-hashtag"></i> Etiquetas del Mundial</label>
                         <div class="categoria-tags">
-                            <select id="worldCupYear" name="ID_Mundial" class="categoria-tag">
+                            <select name="ID_Mundial" class="categoria-tag">
                                 <option value="">-- Selecciona el año del mundial --</option>
-                                <?php foreach ($mundial as $cat): ?>
-                                    <option value="<?php echo htmlspecialchars($cat['ID_Mundial']); ?>">
-                                            <?php echo htmlspecialchars($cat['Nombre']); ?>
+                                <?php foreach ($mundiales as $mun): ?>
+                                    <option value="<?php echo htmlspecialchars($mun['ID_Mundial']); ?>" <?php echo ($mun['ID_Mundial'] == $pub_data['ID_Mundial']) ? 'selected' : ''; ?>>
+                                            <?php echo htmlspecialchars($mun['Nombre']); ?>
                                     </option>
                                 <?php endforeach; ?>
-                                <!-- ... otras opciones de mundial ... -->
                             </select>
                         </div>
                     </div>
 
                     <!-- Multimedia -->
                     <div class="form-group">
-                        <label><i class="fas fa-image"></i> Multimedia (Opcional)</label>
+                        <label><i class="fas fa-image"></i> Multimedia (Opcional: selecciona un nuevo archivo para reemplazar el actual)</label>
                         <div class="file-upload" id="uploadArea">
                             <button type="button" class="btn btn-upload"
                                 onclick="document.getElementById('mediaFile').click()">
                                 <i class="fa-solid fa-photo-film"></i>
-                                Seleccionar archivos
+                                Cambiar archivo
                             </button>
-                            <input type="file" id="mediaFile" name="Multimedia" class="file-input" accept="image/*,video/*" multiple>
-                            <div class="media-preview" id="mediaPreview"></div>
+                            <input type="file" id="mediaFile" name="Multimedia" class="file-input" accept="image/*,video/*">
+                            <div class="media-preview" id="mediaPreview">
+                                <?php if (!empty($pub_data['Multimedia'])): ?>
+                                    <p>Multimedia actual:</p>
+                                    <?php
+                                        $media_type = $pub_data['TipoMultimedia'];
+                                        $media_src = 'data:' . $media_type . ';base64,' . base64_encode($pub_data['Multimedia']);
+                                    ?>
+                                    <?php if (strpos($media_type, 'image/') === 0): ?>
+                                        <img src="<?php echo $media_src; ?>" style="max-width: 200px; border-radius: 8px;">
+                                    <?php elseif (strpos($media_type, 'video/') === 0): ?>
+                                        <video src="<?php echo $media_src; ?>" style="max-width: 200px; border-radius: 8px;" controls></video>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Botones  -->
                     <div class="form-buttons">
-                        <button type="button" class="btn btn-secondary" onclick="window.location.href='inicio.php'">
+                        <button type="button" class="btn btn-secondary" onclick="window.location.href='mis_publicaciones.php'">
                             <i class="fas fa-times"></i> Cancelar
                         </button>
                         <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-paper-plane"></i> Publicar
+                            <i class="fas fa-paper-plane"></i> Guardar y Reenviar
                         </button>
                     </div>
                 </form>
             </div>
             
             <!-- Sistema de alertas  -->
-
             <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
             <?php if (!empty($error_message)) : ?>
             <script>
                 Swal.fire({
                     icon: 'error',
-                    title: '❌ Error al Publicar',
+                    title: '❌ Error al Actualizar',
                     text: <?php echo json_encode($error_message); ?>,
                     confirmButtonColor: '#d33'
                 });
             </script>
             <?php endif; ?>
 
-            <?php if (isset($_GET['publicado']) && $_GET['publicado'] === 'exitoso') : ?>
-            <script>
-                Swal.fire({
-                    icon: 'success',
-                    title: '¡Publicación Exitosa!',
-                    text: 'Tu publicación ha sido creada correctamente.',
-                    confirmButtonColor: '#3085d6'
-                });
-                // Limpiar el parámetro GET de la URL para evitar que la alerta se muestre de nuevo al recargar
-                if (window.history.replaceState) {
-                    window.history.replaceState(null, null, window.location.pathname);
-                }
-            </script>
-            <?php endif; ?>
-
         </main>
     </div>
     <script src="../javascript/crear_publi.js"></script>
-    <script src="../javascript/inicio.js"></script> <!-- Para el menu toggle -->
+    <script src="../javascript/inicio.js"></script>
 
     <!-- Footer -->
     <footer class="footer">

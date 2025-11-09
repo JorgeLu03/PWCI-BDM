@@ -440,6 +440,7 @@ body {
     color: var(--accent-color);
     text-decoration: none;
     font-weight: 600;
+    text-align: center;
 }
 
 /* Estilos para el formulario de nuevo comentario */

@@ -1,11 +1,39 @@
 <?php
 session_start();
+
+// --- Restringir acceso a usuarios no logueados ---
+if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
+    // Si el usuario no ha iniciado sesión, redirigirlo a la página de login.
+    header('Location: Iniciar_sesion.php');
+    exit(); // Detener la ejecución del script después de redirigir.
+}
 require_once '../BD/Connection/Connection.php';
 require_once '../BD/Querys/user_functions.php';
 
 $userDetails = getUserDetails($conn);
 $displayName = $userDetails['displayName'];
 $photoSrc = $userDetails['photoSrc'];
+
+// --- Lógica para obtener las publicaciones del usuario ---
+$user_id = $_SESSION['user_id'] ?? 0;
+$user_publications = [];
+
+if ($user_id > 0) {
+    // Preparamos una consulta para obtener las publicaciones del usuario logueado
+    $stmt = $conn->prepare(
+        "SELECT ID_Publi, Titulo, Descripcion, Fec_pub, Multimedia, TipoMultimedia, Views, LikeCount, CommentCount, Estatus, MotivoRechazo
+         FROM V_Publicaciones 
+         WHERE ID_User = ? 
+         ORDER BY Fec_pub DESC"
+    );
+    if ($stmt) {
+        $stmt->bind_param('i', $user_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $user_publications = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+    }
+}
 ?>
 <!DOCTYPE html>
 
@@ -35,7 +63,38 @@ $photoSrc = $userDetails['photoSrc'];
 .header-search button{padding:6px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.15);background:#fff;cursor:pointer}
 /* Ensure profile bubble stands alone */
 .header-profile-link{display:inline-block;text-decoration:none}
-</style></head>
+</style>
+<style data-injected="status-light-styles">
+    .status-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    .status-light {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+    .status-pending { background-color: #ffc107; } /* Amarillo */
+    .status-approved { background-color: #28a745; } /* Verde */
+    .status-rejected { background-color: #dc3545; } /* Rojo */
+
+    .rejection-reason {
+        background-color: #fff3f3;
+        color: #5b1218;
+        border-left: 5px solid #dc3545;
+        border-radius: 8px;
+        padding: 0.75rem 1.25rem;
+        margin-top: 1rem;
+        font-size: 0.95rem;
+    }
+    .rejection-reason strong {
+        color: #842029;
+    }
+</style>
+</head>
 <body>
 <!-- Barra superior - Mundial 2026 -->
 <header class="header">
@@ -84,45 +143,88 @@ $photoSrc = $userDetails['photoSrc'];
 <!-- Contenido principal - Información del Mundial -->
 <main class="main-content">
 <h2>Mis Publicaciones </h2>
-<div class="worldcup-container">
-<div class="worldcup-info">
-<h3>Título Publicación</h3>
-<div class="post-meta">
-<span class="user-publish">Usuario</span>
-<span class="separator">|</span>
-<span class="user-publish">Fecha</span>
-</div>
-<p>El torneo de fútbol más grande del mundo llega a Norteamérica...</p>
-<div class="media-container">
-<img alt="Foto" class="publish-media" src="../css/PlaceHolder3.png"/>
-<video class="publish-media" controls="">
-<source src="../css/PlaceHolder3.mp4" type="video/mp4"/>
-</video>
-</div>
-</div>
-<div class="post-actions">
-    <div class="action-buttons-group">
-        <button class="action-btn like-btn">
-            <i class="fas fa-heart"></i> Me gusta
-            <span class="like-count">150</span>
-        </button>
-        <button class="action-btn comment-btn">
-            <i class="fas fa-comment"></i> Comentar
-        </button>
-    </div>
-    <div class="stat-item">
-        <i class="fas fa-eye"></i> 1,280 Vistas
-    </div>
-</div>
-<div class="post-stats">
-    <h4 class="stats-title">Estadísticas</h4>
-    <div class="stats-list">
-        <div class="stat-item"><strong>Vistas:</strong> 1,280</div>
-        <div class="stat-item"><strong>Me gusta:</strong> <a href="#">150 usuarios</a></div>
-        <div class="stat-item"><strong>Comentarios:</strong> <a href="#">25 usuarios</a></div>
-    </div>
-</div>
-</div>
+<?php if (count($user_publications) > 0): ?>
+    <?php foreach ($user_publications as $pub): ?>
+        <div class="worldcup-container">
+            <div class="worldcup-info">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <h3><?php echo htmlspecialchars($pub['Titulo']); ?></h3>
+                    <?php
+                        $status_class = '';
+                        $status_text = '';
+                        if ($pub['Estatus'] == 1) {
+                            $status_class = 'status-pending';
+                            $status_text = 'Pendiente';
+                        } elseif ($pub['Estatus'] == 2) {
+                            $status_class = 'status-approved';
+                            $status_text = 'Aprobada';
+                        } elseif ($pub['Estatus'] == 3) {
+                            $status_class = 'status-rejected';
+                            $status_text = 'Rechazada';
+                        }
+                    ?>
+                    <div class="status-indicator">
+                        <span class="status-light <?php echo $status_class; ?>"></span>
+                        <span><?php echo $status_text; ?></span>
+                    </div>
+                </div>
+                <div class="post-meta">
+                    <span class="user-publish"><?php echo htmlspecialchars($displayName); ?></span>
+                    <span class="separator">|</span>
+                    <span class="user-publish"><?php echo date("d M, Y", strtotime($pub['Fec_pub'])); ?></span>
+                </div>
+                <?php if ($pub['Estatus'] == 3 && !empty($pub['MotivoRechazo'])): ?>
+                    <div class="rejection-reason">
+                        <strong><i class="fas fa-exclamation-circle"></i> Motivo del rechazo:</strong> <?php echo htmlspecialchars($pub['MotivoRechazo']); ?>
+                    </div>
+                <?php endif; ?>
+                <p><?php echo nl2br(htmlspecialchars($pub['Descripcion'])); ?></p>
+                
+                <?php if (!empty($pub['Multimedia']) && !empty($pub['TipoMultimedia'])): ?>
+                    <div class="media-container">
+                        <?php
+                            $media_type = $pub['TipoMultimedia'];
+                            $media_src = 'data:' . $media_type . ';base64,' . base64_encode($pub['Multimedia']);
+                        ?>
+                        <?php if (strpos($media_type, 'image/') === 0): ?>
+                            <img alt="Multimedia de la publicación" class="publish-media" src="<?php echo $media_src; ?>"/>
+                        <?php elseif (strpos($media_type, 'video/') === 0): ?>
+                            <video class="publish-media" controls loop>
+                                <source src="<?php echo $media_src; ?>" type="<?php echo $media_type; ?>">
+                            </video>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+            <div class="post-actions">
+                <div class="action-buttons-group">
+                    <a href="comentarios_publi.php?id=<?php echo $pub['ID_Publi']; ?>" class="action-btn comment-btn">
+                        <i class="fas fa-comment"></i> Ver Comentarios
+                    </a>
+                    <?php if ($pub['Estatus'] == 3): ?>
+                        <a href="editar_publicacion.php?id=<?php echo $pub['ID_Publi']; ?>" class="action-btn edit-btn">
+                            <i class="fas fa-edit"></i> Editar y Reenviar
+                        </a>
+                    <?php endif; ?>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-eye"></i> <?php echo htmlspecialchars($pub['Views']); ?> Vistas
+                </div>
+            </div>
+            <div class="post-stats">
+                <h4 class="stats-title">Estadísticas</h4>
+                <div class="stats-list">
+                    <div class="stat-item"><strong>Vistas:</strong> <?php echo htmlspecialchars($pub['Views']); ?></div>
+                    <!-- El conteo de "Me gusta" ahora viene de la vista V_Publicaciones -->
+                    <div class="stat-item"><strong>Me gusta:</strong> <a href="#"><?php echo htmlspecialchars($pub['LikeCount']); ?> usuarios</a></div>
+                    <div class="stat-item"><strong>Comentarios:</strong> <a href="#"><?php echo htmlspecialchars($pub['CommentCount']); ?> usuarios</a></div>
+                </div>
+            </div>
+        </div>
+    <?php endforeach; ?>
+<?php else: ?>
+    <p style="text-align: center; padding: 2rem;">Aún no has creado ninguna publicación. <a href="crear_publicacion.php">¡Crea la primera!</a></p>
+<?php endif; ?>
 </main>
 
 </div>

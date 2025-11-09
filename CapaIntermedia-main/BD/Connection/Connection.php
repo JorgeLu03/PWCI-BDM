@@ -1,6 +1,6 @@
 <?php
 $servername = "localhost";
-$database = "BDM-PWCI";
+$database = "bdmpwci2";
 $username = "root";
 $password = "";
 $conn = mysqli_connect($servername, $username, $password, $database);

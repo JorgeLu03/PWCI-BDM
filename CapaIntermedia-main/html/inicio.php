@@ -39,7 +39,24 @@ $userType = $userDetails['userType'];
 .header-search button{padding:6px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.15);background:#fff;cursor:pointer}
 /* Ensure profile bubble stands alone */
 .header-profile-link{display:inline-block;text-decoration:none}
-</style></head>
+</style>
+<style data-injected="publication-card-fix">
+    /* Estilos para asegurar que la multimedia tenga un tamaño consistente */
+    .publication-card-media {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9; /* Proporción panorámica (16:9) */
+        background-color: #e0e0e0; /* Color de fondo mientras carga la imagen */
+        overflow: hidden; /* Oculta las partes de la imagen/video que se salgan del contenedor */
+    }
+    .publication-card-media img,
+    .publication-card-media video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover; /* Escala la imagen/video para llenar el contenedor sin deformarse */
+    }
+</style>
+</head>
 <body>
 <!-- Barra superior - Mundial 2026 -->
 <header class="header">
@@ -84,7 +101,12 @@ $userType = $userDetails['userType'];
 <li><a href="crear_publicacion.php"><i class="fa-solid fa-upload"></i> <span>Publicar</span></a></li>
 <!-- <li><a href="#"><i class="fas fa-cog"></i> <span>Configuración</span></a></li> -->
 <!-- Otros botones -->
-<li><a href="Iniciar_sesion.php"><i class="fa-solid fa-right-to-bracket"></i> <span>Iniciar Sesión</span></a></li>
+ <?php
+        // Comprobar si NO existe la variable de sesión 'user_id' (es decir, NO está logueado)
+        if (!isset($_SESSION['user_id'])): 
+        ?>
+            <li><a href="Iniciar_sesion.php"><i class="fa-solid fa-right-to-bracket"></i> <span>Iniciar Sesión</span></a></li>
+        <?php endif; ?>
 <?php if ($userType === 0): ?>
 <li><a href="administrar_publis.php"><i class="fa-solid fa-user-tie"></i> <span>Administrar</span></a></li>
 <?php endif; ?>
@@ -95,50 +117,86 @@ $userType = $userDetails['userType'];
 <!-- Contenido principal - Información del Mundial -->
 <main class="main-content">
     <h2>La Copa Mundial FIFA </h2>
-    <div class="filter-container">
-        <span>Ordenar por:</span>
-        <button class="filter-btn active" data-sort="chronological">Recientes</button>
-        <button class="filter-btn" data-sort="likes">Más gustados</button>
-        <button class="filter-btn" data-sort="comments">Más comentados</button>
-    </div>
+    <?php
+        // Determinar el filtro activo y el procedimiento a llamar
+        $sort_by = $_GET['sort'] ?? 'recent'; // Por defecto, 'recent'
+        $sql = "CALL Mostrar_Publicacion()"; // SP por defecto
+
+        if ($sort_by === 'likes') {
+            $sql = "CALL SP_GetPostsByLikes()";
+        } elseif ($sort_by === 'comments') {
+            $sql = "CALL SP_GetPostsByComments()";
+        }
+    ?>
+     <div class="filter-container">
+         <span>Ordenar por:</span>
+         <a href="inicio.php?sort=recent" class="filter-btn <?php echo ($sort_by === 'recent') ? 'active' : ''; ?>">Recientes</a>
+         <a href="inicio.php?sort=likes" class="filter-btn <?php echo ($sort_by === 'likes') ? 'active' : ''; ?>">Más gustados</a>
+         <a href="inicio.php?sort=comments" class="filter-btn <?php echo ($sort_by === 'comments') ? 'active' : ''; ?>">Más comentados</a>
+     </div>
     <section class="infografia" id="infografia">
         <div class="cards-grid">
-            <!-- Ejemplo de Publicación como Tarjeta -->
-            <a class="card-link" data-comments="25" data-date="2024-05-21T10:00:00Z" data-likes="150" href="comentarios_publi.php">
-                <article class="card publication-card">
-                    <div class="publication-card-media">
-                        <img alt="Foto de la publicación" src="../css/PlaceHolder3.png"/>
-                    </div>
-                    <div class="publication-card-content">
-                        <h3>Título Publicación de Ejemplo</h3>
-                        <p>El torneo de fútbol más grande del mundo llega a Nort...</p>
-                    </div>
-                </article>
-            </a>
-            <!-- Puedes añadir más publicaciones aquí siguiendo la misma estructura -->
-            <a class="card-link" data-comments="12" data-date="2024-05-20T18:30:00Z" data-likes="95" href="comentarios_publi.php">
-                <article class="card publication-card">
-                    <div class="publication-card-media">
-                        <img alt="Foto de la publicación" src="../css/PlaceHolder3.png"/>
-                    </div>
-                    <div class="publication-card-content">
-                        <h3>Análisis del Grupo de la Muerte</h3>
-                        <p>Un vistazo profundo a los equipos que conforman el...</p>
-                    </div>
-                </article>
-            </a>
-            <a class="card-link" data-comments="48" data-date="2024-05-22T09:00:00Z" data-likes="210" href="comentarios_publi.php">
-                <article class="card publication-card">
-                    <div class="publication-card-media">
-                        <img alt="Foto de la publicación" src="../css/PlaceHolder3.png"/>
-                    </div>
-                    <div class="publication-card-content">
-                        <h3>Estadios para el 2026</h3>
-                        <p>Descubre los diseños arquitectónicos y las tec...</p>
-                    </div>
-                </article>
-            </a>
-        </div>
+          <?php
+            // 2. Ejecuta la consulta
+            $result = $conn->query($sql);
+
+            // 3. Verifica si se obtuvieron resultados
+            if ($result && $result->num_rows > 0) {
+                // 4. Itera sobre cada fila (publicación) obtenida
+                while($row = $result->fetch_assoc()) {
+                    // Mapea las variables para mayor claridad
+                    $idPubli = htmlspecialchars($row['ID_Publi']);
+                    $titulo = htmlspecialchars($row['Titulo']);
+                    // Limita la descripción para que quepa en la tarjeta (opcional)
+                    $descripcionCorta = htmlspecialchars(substr($row['Descripcion'], 0, 80)) . '...'; 
+
+                    // 5. Genera el HTML de la tarjeta para la publicación
+                    ?>
+                    <a class="card-link" href="comentarios_publi.php?id=<?php echo $idPubli; ?>">
+                        <article class="card publication-card">
+                            <div class="publication-card-media">
+                                <?php if (!empty($row['Multimedia']) && !empty($row['TipoMultimedia'])): ?>
+                                    <?php
+                                        $media_type = $row['TipoMultimedia'];
+                                        $media_src = 'data:' . $media_type . ';base64,' . base64_encode($row['Multimedia']);
+                                    ?>
+                                    <?php if (strpos($media_type, 'image/') === 0): ?>
+                                        <img alt="<?php echo $titulo; ?>" src="<?php echo $media_src; ?>"/>
+                                    <?php elseif (strpos($media_type, 'video/') === 0): ?>
+                                        <video muted loop>
+                                            <source src="<?php echo $media_src; ?>" type="<?php echo $media_type; ?>">
+                                        </video>
+                                    <?php endif; ?>
+                                <?php else: ?>
+                                    <img alt="Sin multimedia" src="../css/PlaceHolder3.png"/>
+                                <?php endif; ?>
+                            </div>
+                            <div class="publication-card-content">
+                                <h3><?php echo $titulo; ?></h3>
+                                <p><?php echo $descripcionCorta; ?></p>
+                            </div>
+                        </article>
+                    </a>
+                    <?php
+                }
+            } else {
+                // Mensaje si no hay publicaciones
+                echo "<p style='grid-column: 1 / -1; text-align: center; padding: 20px;'>No hay publicaciones disponibles en este momento.</p>";
+            }
+
+            // Es crucial cerrar el resultset y liberar la conexión 
+            // después de usar un SP, especialmente si usas mysqli.
+            if (isset($result) && $result instanceof mysqli_result) {
+                $result->free();
+            }
+            
+            // Esto es necesario para evitar el error "Commands out of sync"
+            // si se usa otra consulta o SP inmediatamente después.
+            if (isset($conn) && $conn->more_results()) {
+                $conn->next_result();
+            }
+            ?>
+            </div>
     </section>
 </main>
 </div>

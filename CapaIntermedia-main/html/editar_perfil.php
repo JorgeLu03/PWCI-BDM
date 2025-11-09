@@ -185,9 +185,8 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
 <!-- <h2><i class="fas fa-tachometer-alt"></i> Mi Mundial</h2> -->
 <ul>
 <li><a href="inicio.php"><i class="fas fa-home"></i> <span>Inicio</span></a></li>
-<li><a href="mis_publicaciones.php"><i class="fa-solid fa-image"></i> <span>Mis
-                            Publicaciones</span></a></li>
-<li><a href="editar_perfil.php"><i class="fas fa-cog"></i> <span>Configuración</span></a></li>
+<li><a href="mis_publicaciones.php"><i class="fa-solid fa-image"></i> <span>Mis Publicaciones</span></a></li>
+<li><a href="javascript:history.back()" onclick="return true;"><i class="fas fa-undo"></i><span>Volver Atrás</span></a></li>
 </ul>
 </aside>
 <!-- Contenido principal - Información del Mundial -->

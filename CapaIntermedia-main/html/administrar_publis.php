@@ -127,6 +127,25 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['create_mundial'])) {
     header("Location: " . $_SERVER['PHP_SELF'] . "?tab=create");
     exit();
 }
+
+// --- Lógica para obtener publicaciones pendientes ---
+$pending_publications = [];
+$stmt_pending = $conn->prepare("CALL SP_GetPendingPublications()");
+if ($stmt_pending && $stmt_pending->execute()) {
+    $result_pending = $stmt_pending->get_result();
+    $pending_publications = $result_pending->fetch_all(MYSQLI_ASSOC);
+    $stmt_pending->close();
+    while ($conn->more_results() && $conn->next_result()) {;}
+}
+
+// --- Lógica para obtener comentarios pendientes ---
+$pending_comments = [];
+$stmt_comments = $conn->prepare("CALL SP_GetPendingComments()");
+if ($stmt_comments && $stmt_comments->execute()) {
+    $result_comments = $stmt_comments->get_result();
+    $pending_comments = $result_comments->fetch_all(MYSQLI_ASSOC);
+    $stmt_comments->close();
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -135,6 +154,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['create_mundial'])) {
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Copa Mundial FIFA 2026</title>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <link href="../css/inicio.css" rel="stylesheet"/>
 <link href="../css/admin.css" rel="stylesheet"/>
 <style data-injected="header-perfil">
@@ -217,56 +237,75 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['create_mundial'])) {
 
     <!-- Sección de Publicaciones -->
     <div id="admin-publis-section" style="<?php echo ($active_tab !== 'publis') ? 'display: none;' : ''; ?>">
-        <div class="worldcup-container">
-            <div class="worldcup-info">
-                <h3>Título Publicación</h3>
-                <div class="post-meta">
-                    <span class="user-publish">Usuario</span>
-                    <span class="separator">|</span>
-                    <span class="user-publish">Fecha</span>
-                    <span class="separator">|</span>
-                    <span class="user-publish">Categoria</span>
-                    <span class="separator">|</span>
-                    <span class="user-publish">Mundial</span>
+        <?php if (count($pending_publications) > 0): ?>
+            <?php foreach ($pending_publications as $pub): ?>
+                <div class="worldcup-container" id="pub-<?php echo $pub['ID_Publi']; ?>">
+                    <div class="worldcup-info">
+                        <h3><?php echo htmlspecialchars($pub['Titulo']); ?></h3>
+                        <div class="post-meta">
+                            <span class="user-publish"><?php echo htmlspecialchars($pub['Nombre_Usuario']); ?></span>
+                            <span class="separator">|</span>
+                            <span class="user-publish"><?php echo date("d M, Y", strtotime($pub['Fec_pub'])); ?></span>
+                            <span class="separator">|</span>
+                            <span class="user-publish"><?php echo htmlspecialchars($pub['Nombre_Categoria']); ?></span>
+                            <span class="separator">|</span>
+                            <span class="user-publish"><?php echo htmlspecialchars($pub['Nombre_Mundial']); ?></span>
+                        </div>
+                        <p><?php echo nl2br(htmlspecialchars($pub['Descripcion'])); ?></p>
+                        <?php if (!empty($pub['Multimedia']) && !empty($pub['TipoMultimedia'])): ?>
+                            <div class="media-container">
+                                <?php
+                                    $media_type = $pub['TipoMultimedia'];
+                                    $media_src = 'data:' . $media_type . ';base64,' . base64_encode($pub['Multimedia']);
+                                ?>
+                                <?php if (strpos($media_type, 'image/') === 0): ?>
+                                    <img alt="Multimedia" class="publish-media" src="<?php echo $media_src; ?>"/>
+                                <?php elseif (strpos($media_type, 'video/') === 0): ?>
+                                    <video class="publish-media" controls><source src="<?php echo $media_src; ?>" type="<?php echo $media_type; ?>"></video>
+                                <?php endif; ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="post-actions">
+                        <button class="action-btn approve-btn" data-id="<?php echo $pub['ID_Publi']; ?>">
+                            <i class="fa-solid fa-thumbs-up"></i> Aprobar
+                        </button>
+                        <button class="action-btn reject-btn" data-id="<?php echo $pub['ID_Publi']; ?>">
+                            <i class="fa-solid fa-xmark"></i> Rechazar
+                        </button>
+                    </div>
                 </div>
-                <p>El torneo de fútbol más grande del mundo llega a Norteamérica...</p>
-                <div class="media-container">
-                    <img alt="Foto" class="publish-media" src="../css/PlaceHolder3.png"/>
-                    <video class="publish-media" controls="">
-                        <source src="../css/PlaceHolder3.mp4" type="video/mp4"/>
-                    </video>
-                </div>
-            </div>
-            <div class="post-actions">
-                <button class="action-btn like-btn">
-                    <i class="fa-solid fa-thumbs-up"></i> Aprobar
-                </button>
-                <button class="action-btn comment-btn">
-                    <i class="fa-solid fa-xmark"></i> Rechazar
-                </button>
-            </div>
-        </div>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <p style="text-align: center; padding: 2rem;">No hay publicaciones pendientes de aprobación.</p>
+        <?php endif; ?>
     </div>
 
     <!-- Sección de Comentarios -->
     <div id="admin-comments-section" style="<?php echo ($active_tab !== 'comments') ? 'display: none;' : ''; ?>">
-        <div class="worldcup-container">
-            <div class="worldcup-info comment">
-                <h4>Comentario de: <span class="user-publish" style="font-weight: bold;">Usuario Ejemplo</span></h4>
-                <p>Este es un comentario de ejemplo que está pendiente de moderación. El administrador puede aprobarlo o rechazarlo.</p>
-                <div class="post-meta" style="margin-top: 10px;">
-                    <span>En la publicación: <strong>"Título de la Publicación Original"</strong></span>
+        <?php if (count($pending_comments) > 0): ?>
+            <?php foreach ($pending_comments as $comment): ?>
+                <div class="worldcup-container" id="comment-<?php echo $comment['ID_Coment']; ?>">
+                    <div class="worldcup-info comment">
+                        <h4>Comentario de: <span class="user-publish" style="font-weight: bold;"><?php echo htmlspecialchars($comment['NombreUsuario']); ?></span></h4>
+                        <p><?php echo nl2br(htmlspecialchars($comment['Contenido'])); ?></p>
+                        <div class="post-meta" style="margin-top: 10px;">
+                            <span>En la publicación: <a href="comentarios_publi.php?id=<?php echo $comment['ID_Publi']; ?>" target="_blank"><strong><?php echo htmlspecialchars($comment['TituloPublicacion']); ?></strong></a></span>
+                        </div>
+                    </div>
+                    <div class="post-actions">
+                        <button class="action-btn approve-comment-btn" data-id="<?php echo $comment['ID_Coment']; ?>">
+                            <i class="fa-solid fa-thumbs-up"></i> Aprobar
+                        </button>
+                        <button class="action-btn reject-comment-btn" data-id="<?php echo $comment['ID_Coment']; ?>">
+                            <i class="fa-solid fa-xmark"></i> Rechazar
+                        </button>
+                    </div>
                 </div>
-            </div>
-            <div class="post-actions">
-                <button class="action-btn like-btn">
-                    <i class="fa-solid fa-thumbs-up"></i> Aprobar
-                </button>
-                <button class="action-btn comment-btn">
-                    <i class="fa-solid fa-xmark"></i> Rechazar
-                </button>
-            </div>
-        </div>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <p style="text-align: center; padding: 2rem;">No hay comentarios pendientes de aprobación.</p>
+        <?php endif; ?>
     </div>
 
     <!-- Sección de Creación -->
@@ -466,6 +505,162 @@ document.addEventListener('DOMContentLoaded', function () {
     btnPublis.addEventListener('click', () => toggleSections(btnPublis, sectionPublis));
     btnComments.addEventListener('click', () => toggleSections(btnComments, sectionComments));
     btnCreate.addEventListener('click', () => toggleSections(btnCreate, sectionCreate));
+
+    // --- Lógica para aprobar/rechazar publicaciones ---
+    document.querySelectorAll('.approve-btn, .reject-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const publiId = this.dataset.id;
+            const action = this.classList.contains('approve-btn') ? 'approve' : 'reject';
+
+            if (action === 'reject') {
+                Swal.fire({
+                    title: 'Motivo del Rechazo',
+                    input: 'textarea',
+                    inputPlaceholder: 'Escribe aquí por qué se rechaza la publicación...',
+                    showCancelButton: true,
+                    confirmButtonText: 'Rechazar Publicación',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#dc3545',
+                    showLoaderOnConfirm: true,
+                    preConfirm: (reason) => {
+                        if (!reason || reason.trim() === '') {
+                            Swal.showValidationMessage('El motivo del rechazo no puede estar vacío.');
+                            return false;
+                        }
+                        return reason;
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        handlePublicationAction(publiId, action, result.value);
+                    }
+                });
+            } else { // Para 'approve'
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: "Vas a APROBAR esta publicación y será visible para todos.",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, ¡aprobar!',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        handlePublicationAction(publiId, action);
+                    }
+                });
+            }
+        });
+    });
+
+    // --- Lógica para aprobar/rechazar comentarios ---
+    document.querySelectorAll('.approve-comment-btn, .reject-comment-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const commentId = this.dataset.id;
+            const action = this.classList.contains('approve-comment-btn') ? 'approve' : 'reject';
+
+            if (action === 'approve') {
+                Swal.fire({
+                    title: '¿Aprobar Comentario?',
+                    text: "El comentario será visible para todos.",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745',
+                    confirmButtonText: 'Sí, ¡aprobar!',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        handleCommentAction(commentId, action);
+                    }
+                });
+            } else { // Para 'reject'
+                Swal.fire({
+                    title: '¿Rechazar Comentario?',
+                    text: "El comentario será eliminado permanentemente. Esta acción no se puede deshacer.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    confirmButtonText: 'Sí, ¡rechazar!',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        handleCommentAction(commentId, action);
+                    }
+                });
+            }
+        });
+    });
+
+    function handleCommentAction(commentId, action) {
+        const formData = new FormData();
+        formData.append('comment_id', commentId);
+        formData.append('action', action);
+
+        fetch('comment_action_handler.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const cardToRemove = document.getElementById('comment-' + commentId);
+                if (cardToRemove) {
+                    cardToRemove.style.transition = 'opacity 0.5s ease';
+                    cardToRemove.style.opacity = '0';
+                    setTimeout(() => {
+                        cardToRemove.remove();
+                        if (document.querySelectorAll('#admin-comments-section .worldcup-container').length === 0) {
+                            document.getElementById('admin-comments-section').innerHTML = '<p style="text-align: center; padding: 2rem;">No hay más comentarios pendientes.</p>';
+                        }
+                    }, 500);
+                }
+            } else {
+                Swal.fire('Error', data.error || 'No se pudo procesar la solicitud.', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error en la petición fetch:', error);
+            Swal.fire('Error de Conexión', 'No se pudo comunicar con el servidor.', 'error');
+        });
+    }
+
+    function handlePublicationAction(publiId, action, reason = null) {
+        const formData = new FormData();
+        formData.append('publi_id', publiId);
+        formData.append('action', action);
+        if (reason) {
+            formData.append('reason', reason);
+        }
+
+        fetch('publication_action_handler.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const cardToRemove = document.getElementById('pub-' + publiId);
+                if (cardToRemove) {
+                    cardToRemove.style.transition = 'opacity 0.5s ease';
+                    cardToRemove.style.opacity = '0';
+                    setTimeout(() => {
+                        cardToRemove.remove();
+                        if (document.querySelectorAll('#admin-publis-section .worldcup-container').length === 0) {
+                            document.getElementById('admin-publis-section').innerHTML = '<p style="text-align: center; padding: 2rem;">No hay más publicaciones pendientes.</p>';
+                        }
+                    }, 500);
+                }
+            } else {
+                Swal.fire('Error', data.error || 'No se pudo procesar la solicitud.', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error en la petición fetch:', error);
+            Swal.fire('Error de Conexión', 'No se pudo comunicar con el servidor.', 'error');
+        });
+    }
+
 });
 </script>
 <!-- Footer -->

@@ -156,7 +156,7 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
 <h1>GolNet </h1>
 <!-- <div class="motto">Uniendo al mundo a través del fútbol</div> -->
 </div>
-</div><div class="header-center"><form action="#" class="header-search" method="GET"><input name="q" placeholder="Buscar..." type="search"/><button type="submit">Buscar</button></form></div>
+</div><div class="header-center"><form action="buscar.php" class="header-search" method="GET"><input name="q" placeholder="Buscar..." type="search"/><button type="submit">Buscar</button></form></div>
 <?php if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])): ?>
 <div class="countdown">
 <a class="header-logout-icon-link" href="cerrar_sesion.php" title="Cerrar Sesión"><i class="fa-solid fa-right-from-bracket"></i></a>
@@ -185,8 +185,9 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
 <!-- <h2><i class="fas fa-tachometer-alt"></i> Mi Mundial</h2> -->
 <ul>
 <li><a href="inicio.php"><i class="fas fa-home"></i> <span>Inicio</span></a></li>
-<li><a href="mis_publicaciones.php"><i class="fa-solid fa-image"></i> <span>Mis Publicaciones</span></a></li>
-<li><a href="javascript:history.back()" onclick="return true;"><i class="fas fa-undo"></i><span>Volver Atrás</span></a></li>
+<li><a href="mis_publicaciones.php"><i class="fa-solid fa-image"></i> <span>Mis
+                            Publicaciones</span></a></li>
+<li><a href="editar_perfil.php"><i class="fas fa-cog"></i> <span>Configuración</span></a></li>
 </ul>
 </aside>
 <!-- Contenido principal - Información del Mundial -->

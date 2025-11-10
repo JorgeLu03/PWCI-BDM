@@ -59,7 +59,7 @@ if ($result) {
 <h1>GolNet </h1>
 <!-- <div class="motto">Uniendo al mundo a través del fútbol</div> -->
 </div>
-</div><div class="header-center"><form action="#" class="header-search" method="GET"><input name="q" placeholder="Buscar..." type="search"/><button type="submit">Buscar</button></form></div>
+</div><div class="header-center"><form action="buscar.php" class="header-search" method="GET"><input name="q" placeholder="Buscar..." type="search"/><button type="submit">Buscar</button></form></div>
 <?php if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])): ?>
 <div class="countdown">
 <a class="header-logout-icon-link" href="cerrar_sesion.php" title="Cerrar Sesión"><i class="fa-solid fa-right-from-bracket"></i></a>
@@ -91,17 +91,12 @@ if ($result) {
 <li><a href="crear_publicacion.php"><i class="fa-solid fa-upload"></i> <span>Publicar</span></a></li>
 <!-- <li><a href="#"><i class="fas fa-cog"></i> <span>Configuración</span></a></li> -->
 <!-- Otros botones -->
-<?php
-    // Comprobar si NO existe la variable de sesión 'user_id' (es decir, NO está logueado)
-    if (!isset($_SESSION['user_id'])): 
-    ?>
-        <li><a href="Iniciar_sesion.php"><i class="fa-solid fa-right-to-bracket"></i> <span>Iniciar Sesión</span></a></li>
-    <?php endif; ?>
+<li><a href="Iniciar_sesion.php"><i class="fa-solid fa-right-to-bracket"></i> <span>Iniciar Sesión</span></a></li>
 <?php if ($userType === 0): ?>
 <li><a href="administrar_publis.php"><i class="fa-solid fa-user-tie"></i> <span>Administrar</span></a></li>
 <?php endif; ?>
 <li><a href="mundiales.php"><i class="fas fa-trophy"></i> <span>Mundiales</span></a></li>
-<li><a href="javascript:history.back()" onclick="return true;"><i class="fas fa-undo"></i><span>Volver Atrás</span></a></li>
+<li><a href="categorías.php"><i class="fa-solid fa-tags"></i> <span>Categorías</span></a></li>
 </ul>
 </aside>
 <!-- Contenido principal - Información del Mundial -->

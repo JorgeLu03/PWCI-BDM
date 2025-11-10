@@ -40,6 +40,29 @@ if (!empty($category_details['Imagen'])) {
     // Convertir los datos BLOB a una Data URI para mostrar la imagen
     $categoryImageSrc = 'data:image/jpeg;base64,' . base64_encode($category_details['Imagen']);
 }
+
+// --- Lógica para obtener las publicaciones de la categoría ---
+$publications = [];
+$sort_by = $_GET['sort'] ?? 'recent'; // Por defecto, 'recent'
+$sp_name = "SP_GetPostsByCategory"; // SP por defecto
+
+if ($sort_by === 'likes') {
+    $sp_name = "SP_GetPostsByCategory_ByLikes";
+} elseif ($sort_by === 'comments') {
+    $sp_name = "SP_GetPostsByCategory_ByComments";
+}
+
+if ($category_id > 0) {
+    $stmt_posts = $conn->prepare("CALL $sp_name(?)");
+    if ($stmt_posts) {
+        $stmt_posts->bind_param('i', $category_id);
+        $stmt_posts->execute();
+        $result_posts = $stmt_posts->get_result();
+        $publications = $result_posts->fetch_all(MYSQLI_ASSOC);
+        $stmt_posts->close();
+        while ($conn->more_results() && $conn->next_result()) {;}
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -66,6 +89,22 @@ if (!empty($category_details['Imagen'])) {
 .header-search input[type="search"]{padding:6px 10px;border-radius:999px;border:1px solid rgba(0,0,0,.15);min-width:220px}
 .header-search button{padding:6px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.15);background:#fff;cursor:pointer}
 .header-profile-link{display:inline-block;text-decoration:none}
+</style>
+<style data-injected="publication-card-fix">
+    /* Estilos para asegurar que la multimedia tenga un tamaño consistente */
+    .publication-card-media {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9; /* Proporción panorámica (16:9) */
+        background-color: #e0e0e0; /* Color de fondo mientras carga la imagen */
+        overflow: hidden; /* Oculta las partes de la imagen/video que se salgan del contenedor */
+    }
+    .publication-card-media img,
+    .publication-card-media video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover; /* Escala la imagen/video para llenar el contenedor sin deformarse */
+    }
 </style>
 <style>
     .category-header {
@@ -113,7 +152,7 @@ if (!empty($category_details['Imagen'])) {
             <div class="logo"><i class="fas fa-futbol"></i></div>
             <div><h1>GolNet</h1></div>
         </div>
-        <div class="header-center"><form action="#" class="header-search" method="GET"><input name="q" placeholder="Buscar..." type="search"/><button type="submit">Buscar</button></form></div>
+        <div class="header-center"><form action="buscar.php" class="header-search" method="GET"><input name="q" placeholder="Buscar..." type="search"/><button type="submit">Buscar</button></form></div>
         <?php if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])): ?>
         <div class="countdown">
             <a class="header-logout-icon-link" href="cerrar_sesion.php" title="Cerrar Sesión"><i class="fa-solid fa-right-from-bracket"></i></a>
@@ -154,28 +193,49 @@ if (!empty($category_details['Imagen'])) {
 
         <!-- Filtros (igual que en inicio.php) -->
         <div class="filter-container">
-            <span>Ordenar por:</span>
-            <button class="filter-btn active" data-sort="chronological">Recientes</button>
-            <button class="filter-btn" data-sort="likes">Más gustados</button>
-            <button class="filter-btn" data-sort="comments">Más comentados</button>
+             <span>Ordenar por:</span>
+             <a href="categoria.php?id=<?php echo $category_id; ?>&sort=recent" class="filter-btn <?php echo ($sort_by === 'recent') ? 'active' : ''; ?>">Recientes</a>
+             <a href="categoria.php?id=<?php echo $category_id; ?>&sort=likes" class="filter-btn <?php echo ($sort_by === 'likes') ? 'active' : ''; ?>">Más gustados</a>
+             <a href="categoria.php?id=<?php echo $category_id; ?>&sort=comments" class="filter-btn <?php echo ($sort_by === 'comments') ? 'active' : ''; ?>">Más comentados</a>
         </div>
 
         <!-- Grid de Publicaciones -->
         <section class="infografia" id="infografia">
             <div class="cards-grid">
-                <!--
-                    AQUÍ DEBES CARGAR DINÁMICAMENTE LAS PUBLICACIONES DE ESTA CATEGORÍA DESDE LA BASE DE DATOS.
-                    La consulta SQL sería algo como:
-                    SELECT * FROM Publicaciones WHERE id_categoria = (SELECT id FROM Categorias WHERE slug = ?)
-                -->
-                <p style="text-align:center; width:100%;">Aquí se mostrarán las publicaciones de "<?php echo htmlspecialchars($category_details['Nombre']); ?>".</p>
-                <!-- Ejemplo de tarjeta -->
-                <a class="card-link" data-comments="25" data-date="2024-05-21T10:00:00Z" data-likes="150" href="comentarios_publi.php">
-                    <article class="card publication-card">
-                        <div class="publication-card-media"><img alt="Foto" src="../css/PlaceHolder3.png"/></div>
-                        <div class="publication-card-content"><h3>Publicación de Ejemplo en Categoría</h3><p>Contenido de la publicación...</p></div>
-                    </article>
-                </a>
+                <?php if (count($publications) > 0): ?>
+                    <?php foreach ($publications as $pub): ?>
+                        <?php
+                            $idPubli = htmlspecialchars($pub['ID_Publi']);
+                            $titulo = htmlspecialchars($pub['Titulo']);
+                            $descripcionCorta = htmlspecialchars(substr($pub['Descripcion'], 0, 80)) . '...';
+                        ?>
+                        <a class="card-link" href="comentarios_publi.php?id=<?php echo $idPubli; ?>">
+                            <article class="card publication-card">
+                                <div class="publication-card-media">
+                                    <?php if (!empty($pub['Multimedia']) && !empty($pub['TipoMultimedia'])): ?>
+                                        <?php
+                                            $media_type = $pub['TipoMultimedia'];
+                                            $media_src = 'data:' . $media_type . ';base64,' . base64_encode($pub['Multimedia']);
+                                        ?>
+                                        <?php if (strpos($media_type, 'image/') === 0): ?>
+                                            <img alt="<?php echo $titulo; ?>" src="<?php echo $media_src; ?>"/>
+                                        <?php elseif (strpos($media_type, 'video/') === 0): ?>
+                                            <video muted loop><source src="<?php echo $media_src; ?>" type="<?php echo $media_type; ?>"></video>
+                                        <?php endif; ?>
+                                    <?php else: ?>
+                                        <img alt="Sin multimedia" src="../css/PlaceHolder3.png"/>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="publication-card-content">
+                                    <h3><?php echo $titulo; ?></h3>
+                                    <p><?php echo $descripcionCorta; ?></p>
+                                </div>
+                            </article>
+                        </a>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <p style="grid-column: 1 / -1; text-align: center; padding: 2rem;">No hay publicaciones en esta categoría por el momento.</p>
+                <?php endif; ?>
             </div>
         </section>
     </main>

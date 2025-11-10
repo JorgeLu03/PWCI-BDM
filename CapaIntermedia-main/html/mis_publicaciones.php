@@ -43,6 +43,7 @@ if ($user_id > 0) {
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Copa Mundial FIFA </title>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <link href="../css/inicio.css" rel="stylesheet"/>
 <style data-injected="header-perfil">
 .header-profile-mini{display:inline-flex;align-items:center;gap:10px;padding:6px 10px;background:rgba(255,255,255,0.08);border-radius:999px;border:1px solid rgba(255,255,255,.15)}
@@ -93,6 +94,20 @@ if ($user_id > 0) {
     .rejection-reason strong {
         color: #842029;
     }
+    .user-list-item {
+        display: flex;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid #eee;
+    }
+    .user-list-item:last-child { border-bottom: none; }
+    .user-list-item img {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        margin-right: 12px;
+        object-fit: cover;
+    }
 </style>
 </head>
 <body>
@@ -107,7 +122,7 @@ if ($user_id > 0) {
 <h1>GolNet </h1>
 <!-- <div class="motto">Uniendo al mundo a través del fútbol</div> -->
 </div>
-</div><div class="header-center"><form action="#" class="header-search" method="GET"><input name="q" placeholder="Buscar..." type="search"/><button type="submit">Buscar</button></form></div>
+</div><div class="header-center"><form action="buscar.php" class="header-search" method="GET"><input name="q" placeholder="Buscar..." type="search"/><button type="submit">Buscar</button></form></div>
 <?php if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])): ?>
 <div class="countdown">
 <a class="header-logout-icon-link" href="cerrar_sesion.php" title="Cerrar Sesión"><i class="fa-solid fa-right-from-bracket"></i></a>
@@ -216,8 +231,8 @@ if ($user_id > 0) {
                 <div class="stats-list">
                     <div class="stat-item"><strong>Vistas:</strong> <?php echo htmlspecialchars($pub['Views']); ?></div>
                     <!-- El conteo de "Me gusta" ahora viene de la vista V_Publicaciones -->
-                    <div class="stat-item"><strong>Me gusta:</strong> <a href="#"><?php echo htmlspecialchars($pub['LikeCount']); ?> usuarios</a></div>
-                    <div class="stat-item"><strong>Comentarios:</strong> <a href="#"><?php echo htmlspecialchars($pub['CommentCount']); ?> usuarios</a></div>
+                    <div class="stat-item"><strong>Me gusta:</strong> <a href="#" class="stat-link" data-action="likers" data-publi-id="<?php echo $pub['ID_Publi']; ?>"><?php echo htmlspecialchars($pub['LikeCount']); ?> usuarios</a></div>
+                    <div class="stat-item"><strong>Comentarios:</strong> <a href="#" class="stat-link" data-action="commenters" data-publi-id="<?php echo $pub['ID_Publi']; ?>"><?php echo htmlspecialchars($pub['CommentCount']); ?> comentarios</a></div>
                 </div>
             </div>
         </div>
@@ -229,5 +244,63 @@ if ($user_id > 0) {
 
 </div>
 <script src="../javascript/inicio.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.stat-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const publiId = this.dataset.publiId;
+            const action = this.dataset.action;
+            const handler = action === 'likers' ? 'get_likers_handler.php' : 'get_commenters_handler.php';
+            const title = action === 'likers' ? 'Personas a las que les gusta' : 'Personas que comentaron';
+
+            fetch(`${handler}?publi_id=${publiId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        let userListHTML = '<div style="text-align: left; max-height: 400px; overflow-y: auto;">';
+                        if (data.users.length > 0) {
+                            data.users.forEach(user => {
+                                const photoSrc = user.Foto 
+                                    ? 'data:image/jpeg;base64,' + user.Foto 
+                                    : '../css/user-default.png';
+                                userListHTML += `
+                                    <div class="user-list-item">
+                                        <img src="${photoSrc}" alt="Foto de ${escapeHTML(user.Nombre)}">
+                                        <span>${escapeHTML(user.Nombre)}</span>
+                                    </div>
+                                `;
+                            });
+                        } else {
+                            userListHTML += '<p style="text-align: center; padding: 20px 0;">Nadie ha interactuado aún.</p>';
+                        }
+                        userListHTML += '</div>';
+
+                        Swal.fire({
+                            title: `<strong>${title}</strong>`,
+                            html: userListHTML,
+                            showCloseButton: true,
+                            showConfirmButton: false,
+                            focusConfirm: false
+                        });
+                    } else {
+                        Swal.fire('Error', data.error || 'No se pudo obtener la lista de usuarios.', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error en la petición fetch:', error);
+                    Swal.fire('Error de Conexión', 'No se pudo comunicar con el servidor.', 'error');
+                });
+        });
+    });
+
+    function escapeHTML(str) {
+        if (typeof str !== 'string') return '';
+        const div = document.createElement('div');
+        div.appendChild(document.createTextNode(str));
+        return div.innerHTML;
+    }
+});
+</script>
 </body>
 </html>

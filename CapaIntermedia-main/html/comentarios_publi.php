@@ -86,6 +86,7 @@ if ($publication === null) {
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Copa Mundial FIFA 2026</title>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <link href="../css/inicio.css" rel="stylesheet"/>
 <style data-injected="header-perfil">
 .header-profile-mini{display:inline-flex;align-items:center;gap:10px;padding:6px 10px;background:rgba(255,255,255,0.08);border-radius:999px;border:1px solid rgba(255,255,255,.15)}
@@ -150,6 +151,16 @@ if ($publication === null) {
         opacity: 1;
         bottom: 40px;
     }
+    .delete-comment-btn {
+        background: none;
+        border: none;
+        color: #dc3545;
+        cursor: pointer;
+        font-size: 0.9rem;
+        opacity: 0.7;
+        transition: opacity 0.2s;
+    }
+    .delete-comment-btn:hover { opacity: 1; }
 </style>
 </head>
 <body>
@@ -164,7 +175,7 @@ if ($publication === null) {
 <h1>GolNet </h1>
 <!-- <div class="motto">Uniendo al mundo a través del fútbol</div> -->
 </div>
-</div><div class="header-center"><form action="#" class="header-search" method="GET"><input name="q" placeholder="Buscar..." type="search"/><button type="submit">Buscar</button></form></div>
+</div><div class="header-center"><form action="buscar.php" class="header-search" method="GET"><input name="q" placeholder="Buscar..." type="search"/><button type="submit">Buscar</button></form></div>
 <?php if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])): ?>
 <div class="countdown">
 <a class="header-logout-icon-link" href="cerrar_sesion.php" title="Cerrar Sesión"><i class="fa-solid fa-right-from-bracket"></i></a>
@@ -263,12 +274,17 @@ if ($publication === null) {
 <div id="comments-section">
     <?php if (count($comments) > 0): ?>
         <?php foreach ($comments as $comment): ?>
-            <div class="worldcup-container">
+            <div class="worldcup-container" id="comment-card-<?php echo $comment['ID_Coment']; ?>">
                 <div class="worldcup-info comment">
                     <div class="comment-author">
                         <img src="<?php echo !empty($comment['FotoUsuario']) ? 'data:image/jpeg;base64,' . base64_encode($comment['FotoUsuario']) : '../css/user-default.png'; ?>" alt="Foto de perfil">
                         <h3><?php echo htmlspecialchars($comment['NombreUsuario']); ?></h3>
                         <span class="comment-date"><?php echo date("d M, Y \a \l\a\s H:i", strtotime($comment['Fec'])); ?></span>
+                        <?php if ($userType === 0): ?>
+                            <button class="delete-comment-btn" data-comment-id="<?php echo $comment['ID_Coment']; ?>" title="Eliminar comentario">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        <?php endif; ?>
                     </div>
                     <p><?php echo nl2br(htmlspecialchars($comment['Contenido'])); ?></p>
                 </div>
@@ -383,6 +399,50 @@ document.addEventListener('DOMContentLoaded', function() {
         div.appendChild(document.createTextNode(str));
         return div.innerHTML;
     }
+
+    // --- Lógica para eliminar comentarios (solo para admin) ---
+    document.querySelectorAll('.delete-comment-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const commentId = this.dataset.commentId;
+
+            Swal.fire({
+                title: '¿Estás seguro?',
+                text: "Esta acción eliminará el comentario permanentemente.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                confirmButtonText: 'Sí, ¡eliminar!',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const formData = new FormData();
+                    formData.append('comment_id', commentId);
+
+                    fetch('delete_comment_handler.php', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const cardToRemove = document.getElementById('comment-card-' + commentId);
+                            if (cardToRemove) {
+                                cardToRemove.style.transition = 'opacity 0.5s ease';
+                                cardToRemove.style.opacity = '0';
+                                setTimeout(() => cardToRemove.remove(), 500);
+                            }
+                        } else {
+                            Swal.fire('Error', data.error || 'No se pudo eliminar el comentario.', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error en la petición de eliminación:', error);
+                        Swal.fire('Error de Conexión', 'No se pudo comunicar con el servidor.', 'error');
+                    });
+                }
+            });
+        });
+    });
 
 });
 </script>

@@ -213,7 +213,7 @@ while ($conn->more_results() && $conn->next_result()) {
                 </div>
             </div>
             <div class="header-center">
-                <form action="#" class="header-search" method="GET">
+                <form action="buscar.php" class="header-search" method="GET">
                     <input name="q" placeholder="Buscar..." type="search"/>
                     <button type="submit">Buscar</button>
                 </form>

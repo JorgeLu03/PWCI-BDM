@@ -230,7 +230,7 @@ if ($publication === null) {
 <span class="separator">|</span>
 <span class="user-publish"><?php echo htmlspecialchars($publication['Nombre_Mundial']); ?></span>
 </div>
-<p><?php echo nl2br(htmlspecialchars($publication['Descripcion'])); ?></p>
+<div class="publication-description"><?php echo nl2br($publication['Descripcion']); ?></div>
 <?php if (!empty($publication['Multimedia']) && !empty($publication['TipoMultimedia'])): ?>
     <div class="media-container">
         <?php

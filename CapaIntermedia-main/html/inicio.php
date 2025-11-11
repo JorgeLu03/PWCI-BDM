@@ -148,7 +148,16 @@ $userType = $userDetails['userType'];
                     $idPubli = htmlspecialchars($row['ID_Publi']);
                     $titulo = htmlspecialchars($row['Titulo']);
                     // Limita la descripción para que quepa en la tarjeta (opcional)
-                    $descripcionCorta = htmlspecialchars(substr($row['Descripcion'], 0, 80)) . '...'; 
+                    // Solo texto en la tarjeta: quitar HTML y recortar de forma segura
+                    $descripcionPlano = trim(preg_replace('/\s+/', ' ', strip_tags($row['Descripcion'])));
+                    if (function_exists('mb_substr')) {
+                        $descripcionCorta = mb_substr($descripcionPlano, 0, 80);
+                        $descLen = function_exists('mb_strlen') ? mb_strlen($descripcionPlano) : strlen($descripcionPlano);
+                    } else {
+                        $descripcionCorta = substr($descripcionPlano, 0, 80);
+                        $descLen = strlen($descripcionPlano);
+                    }
+                    $descripcionCorta = htmlspecialchars($descripcionCorta . ($descLen > 80 ? '...' : ''), ENT_QUOTES, 'UTF-8'); 
 
                     // 5. Genera el HTML de la tarjeta para la publicación
                     ?>
@@ -168,7 +177,7 @@ $userType = $userDetails['userType'];
                                         </video>
                                     <?php endif; ?>
                                 <?php else: ?>
-                                    <img alt="Sin multimedia" src="../css/PlaceHolder3.png"/>
+                                    <img alt="Sin multimedia" src="../css/PlaceHolder3.jpg"/>
                                 <?php endif; ?>
                             </div>
                             <div class="publication-card-content">

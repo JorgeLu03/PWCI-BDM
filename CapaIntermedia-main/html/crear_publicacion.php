@@ -194,12 +194,10 @@ while ($conn->more_results() && $conn->next_result()) {
         /* Ensure profile bubble stands alone */
         .header-profile-link{display:inline-block;text-decoration:none}
     </style>
+    <script src="https://cdn.ckeditor.com/ckeditor5/41.0.0/classic/ckeditor.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-<body>
-</head>
-
 <body>
     <!-- Barra superior - Mundial 2026 -->
     <header class="header">
@@ -336,6 +334,33 @@ while ($conn->more_results() && $conn->next_result()) {
                     </div>
                 </form>
             </div>
+            
+            <!-- Inicializar CKEditor 5 para el campo de contenido -->
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    const textarea = document.querySelector('#contenido');
+                    if (!textarea) return;
+
+                    ClassicEditor
+                        .create(textarea, {
+                            toolbar: {
+                                items: [
+                                    'heading', '|', 'bold', 'italic', 'link',
+                                    'bulletedList', 'numberedList', '|', 'undo', 'redo'
+                                ]
+                            }
+                        })
+                        .then(editor => {
+                            // Mantener sincronizado el valor del textarea para validación y envío
+                            editor.model.document.on('change:data', () => {
+                                textarea.value = editor.getData();
+                            });
+                        })
+                        .catch(error => {
+                            console.error('Error al inicializar CKEditor:', error);
+                        });
+                });
+            </script>
             
             <!-- Sistema de alertas  -->
 

@@ -35,7 +35,7 @@ if ($category_details === null) {
 }
 
 // --- Lógica para la imagen de la categoría ---
-$categoryImageSrc = '../css/PlaceHolder3.png'; // Imagen por defecto
+$categoryImageSrc = '../css/PlaceHolder3.jpg'; // Imagen por defecto
 if (!empty($category_details['Imagen'])) {
     // Convertir los datos BLOB a una Data URI para mostrar la imagen
     $categoryImageSrc = 'data:image/jpeg;base64,' . base64_encode($category_details['Imagen']);
@@ -207,7 +207,16 @@ if ($category_id > 0) {
                         <?php
                             $idPubli = htmlspecialchars($pub['ID_Publi']);
                             $titulo = htmlspecialchars($pub['Titulo']);
-                            $descripcionCorta = htmlspecialchars(substr($pub['Descripcion'], 0, 80)) . '...';
+                            // Solo texto para la tarjeta
+                            $descPlano = trim(preg_replace('/\s+/', ' ', strip_tags($pub['Descripcion'])));
+                            if (function_exists('mb_substr')) {
+                                $descripcionCortaTmp = mb_substr($descPlano, 0, 80);
+                                $descLen = function_exists('mb_strlen') ? mb_strlen($descPlano) : strlen($descPlano);
+                            } else {
+                                $descripcionCortaTmp = substr($descPlano, 0, 80);
+                                $descLen = strlen($descPlano);
+                            }
+                            $descripcionCorta = htmlspecialchars($descripcionCortaTmp . ($descLen > 80 ? '...' : ''), ENT_QUOTES, 'UTF-8');
                         ?>
                         <a class="card-link" href="comentarios_publi.php?id=<?php echo $idPubli; ?>">
                             <article class="card publication-card">
@@ -223,7 +232,7 @@ if ($category_id > 0) {
                                             <video muted loop><source src="<?php echo $media_src; ?>" type="<?php echo $media_type; ?>"></video>
                                         <?php endif; ?>
                                     <?php else: ?>
-                                        <img alt="Sin multimedia" src="../css/PlaceHolder3.png"/>
+                                        <img alt="Sin multimedia" src="../css/PlaceHolder3.jpg"/>
                                     <?php endif; ?>
                                 </div>
                                 <div class="publication-card-content">

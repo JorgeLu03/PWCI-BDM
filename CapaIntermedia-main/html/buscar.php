@@ -121,7 +121,16 @@ if (!empty($search_term)) {
                         <?php
                             $idPubli = htmlspecialchars($pub['ID_Publi']);
                             $titulo = htmlspecialchars($pub['Titulo']);
-                            $descripcionCorta = htmlspecialchars(substr($pub['Descripcion'], 0, 80)) . '...';
+                            // Solo texto en la tarjeta de resultados
+                            $descPlano = trim(preg_replace('/\s+/', ' ', strip_tags($pub['Descripcion'])));
+                            if (function_exists('mb_substr')) {
+                                $descripcionCortaTmp = mb_substr($descPlano, 0, 80);
+                                $descLen = function_exists('mb_strlen') ? mb_strlen($descPlano) : strlen($descPlano);
+                            } else {
+                                $descripcionCortaTmp = substr($descPlano, 0, 80);
+                                $descLen = strlen($descPlano);
+                            }
+                            $descripcionCorta = htmlspecialchars($descripcionCortaTmp . ($descLen > 80 ? '...' : ''), ENT_QUOTES, 'UTF-8');
                         ?>
                         <a class="card-link" href="comentarios_publi.php?id=<?php echo $idPubli; ?>">
                             <article class="card publication-card">
@@ -137,7 +146,7 @@ if (!empty($search_term)) {
                                             <video muted loop><source src="<?php echo $media_src; ?>" type="<?php echo $media_type; ?>"></video>
                                         <?php endif; ?>
                                     <?php else: ?>
-                                        <img alt="Sin multimedia" src="../css/PlaceHolder3.png"/>
+                                        <img alt="Sin multimedia" src="../css/PlaceHolder3.jpg"/>
                                     <?php endif; ?>
                                 </div>
                                 <div class="publication-card-content">

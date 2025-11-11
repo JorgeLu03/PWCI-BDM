@@ -193,7 +193,7 @@ if ($user_id > 0) {
                         <strong><i class="fas fa-exclamation-circle"></i> Motivo del rechazo:</strong> <?php echo htmlspecialchars($pub['MotivoRechazo']); ?>
                     </div>
                 <?php endif; ?>
-                <p><?php echo nl2br(htmlspecialchars($pub['Descripcion'])); ?></p>
+                <div class="publication-description"><?php echo nl2br($pub['Descripcion']); ?></div>
                 
                 <?php if (!empty($pub['Multimedia']) && !empty($pub['TipoMultimedia'])): ?>
                     <div class="media-container">

@@ -112,7 +112,7 @@ if ($result) {
         <?php foreach ($mundiales as $mundial): ?>
             <?php
                 // Determinar la fuente de la imagen del logo
-                $logoSrc = '../css/PlaceHolder3.png'; // Imagen por defecto
+                $logoSrc = '../css/PlaceHolder5.png'; // Imagen por defecto
                 if (!empty($mundial['Logo'])) {
                     // Convertir los datos BLOB a una Data URI para mostrar la imagen
                     $logoSrc = 'data:image/png;base64,' . base64_encode($mundial['Logo']);

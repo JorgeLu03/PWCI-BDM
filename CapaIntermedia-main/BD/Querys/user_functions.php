@@ -2,7 +2,7 @@
 function getUserDetails(mysqli $conn): array
 {
     $displayName = 'Mi Perfil';
-    $photoSrc = '../css/PlaceHolder3.png';
+    $photoSrc = '../css/PlaceHolder3.jpg';
     $userType = null; // Valor por defecto para el tipo de usuario
 
     if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {

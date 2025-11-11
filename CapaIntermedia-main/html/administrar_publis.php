@@ -175,7 +175,20 @@ if ($stmt_comments && $stmt_comments->execute()) {
 .header-search input[type="search"]{padding:6px 10px;border-radius:999px;border:1px solid rgba(0,0,0,.15);min-width:220px}
 .header-search button{padding:6px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.15);background:#fff;cursor:pointer}
 .header-profile-link{display:inline-block;text-decoration:none}
-</style></head>
+</style>
+<style data-injected="post-description-white">
+/* Forzar texto blanco en descripciones con contenido CKEditor */
+.post-description, .post-description * {
+    color: white !important;
+}
+.post-description p, .post-description span, .post-description div,
+.post-description li, .post-description strong, .post-description em,
+.post-description h1, .post-description h2, .post-description h3,
+.post-description h4, .post-description h5, .post-description h6 {
+    color: white !important;
+}
+</style>
+</head>
 <body>
 <!-- Barra superior - Mundial 2026 -->
 <header class="header">
@@ -251,7 +264,12 @@ if ($stmt_comments && $stmt_comments->execute()) {
                             <span class="separator">|</span>
                             <span class="user-publish"><?php echo htmlspecialchars($pub['Nombre_Mundial']); ?></span>
                         </div>
-                        <p><?php echo nl2br(htmlspecialchars($pub['Descripcion'])); ?></p>
+                        <div class="post-description" style="color: white !important;">
+                            <?php 
+                            // Renderizar HTML de CKEditor sin escapar
+                            echo $pub['Descripcion']; 
+                            ?>
+                        </div>
                         <?php if (!empty($pub['Multimedia']) && !empty($pub['TipoMultimedia'])): ?>
                             <div class="media-container">
                                 <?php

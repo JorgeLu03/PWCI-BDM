@@ -151,6 +151,9 @@ while ($conn->more_results() && $conn->next_result()) {;}
         .header-profile-link{display:inline-block;text-decoration:none}
     </style>
 
+    <!-- CKEditor 5 -->
+    <script src="https://cdn.ckeditor.com/ckeditor5/41.0.0/classic/ckeditor.js"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
@@ -227,7 +230,7 @@ while ($conn->more_results() && $conn->next_result()) {;}
                     <div class="form-group">
                         <label for="contenido"><i class="fas fa-align-left"></i> Contenido</label>
                         <textarea id="contenido" name="Descripcion" class="form-textarea" placeholder="Escribe el contenido de tu publicación..."
-                            required><?php echo htmlspecialchars($pub_data['Descripcion']); ?></textarea>
+                            required><?php echo $pub_data['Descripcion']; ?></textarea>
                     </div>
 
                     <!-- Categoría -->
@@ -299,6 +302,33 @@ while ($conn->more_results() && $conn->next_result()) {;}
                 </form>
             </div>
             
+            <!-- Inicializar CKEditor 5 para el campo de contenido -->
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    const textarea = document.querySelector('#contenido');
+                    if (!textarea) return;
+
+                    ClassicEditor
+                        .create(textarea, {
+                            toolbar: {
+                                items: [
+                                    'heading', '|', 'bold', 'italic', 'link',
+                                    'bulletedList', 'numberedList', '|', 'undo', 'redo'
+                                ]
+                            }
+                        })
+                        .then(editor => {
+                            // Mantener sincronizado el valor del textarea para envío
+                            editor.model.document.on('change:data', () => {
+                                textarea.value = editor.getData();
+                            });
+                        })
+                        .catch(error => {
+                            console.error('Error al inicializar CKEditor:', error);
+                        });
+                });
+            </script>
+
             <!-- Sistema de alertas  -->
             <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 

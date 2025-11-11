@@ -344,6 +344,11 @@ body {
     opacity: 0.2;
 }
 
+.publication-description,
+.publication-description * {
+    color: white !important;
+}
+
 .comment{
     color:#ffffff;
     background: var(--secondary-color);

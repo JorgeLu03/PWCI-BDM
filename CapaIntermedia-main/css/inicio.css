@@ -146,6 +146,7 @@ body {
     display: flex;
     flex: 1;
     min-height: calc(100vh - var(--header-height));
+    position: relative;
 }
 
 /* Barra lateral izquierda */
@@ -156,10 +157,15 @@ body {
     transition: all var(--transition-speed) ease;
     overflow-y: auto;
     color: white;
+    position: fixed;
+    top: var(--header-height);
+    bottom: 0;
+    z-index: 100;
 }
 
 .left-sidebar {
     width: var(--sidebar-width);
+    left: 0;
     border-right: 2px solid var(--accent-color);
     background: var(--secondary-color);
 }
@@ -267,10 +273,11 @@ body {
 /* Contenido central  */
 .main-content {
     flex: 1;
-    padding: 20px 30px 30px; /* Reducido el padding superior */
+    padding: 20px 30px 30px;
     background: rgba(255, 255, 255, 0.95);
     overflow-y: auto;
     position: relative;
+    margin-left: var(--sidebar-width);
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M20,20 L80,20 L80,80 L20,80 Z" fill="none" stroke="%230066b3" stroke-width="1" opacity="0.1"/></svg>');
 }
 

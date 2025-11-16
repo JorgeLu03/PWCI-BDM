@@ -10,7 +10,7 @@ class CatalogRepository
 
     public function getCategorias(): array
     {
-        $sql = 'CALL Seleccionar_Dato_Condicional(2);';
+        $sql = 'CALL SP_SeleccionarDatoCondicional(2);';
         $out = [];
         if ($stmt = $this->db->prepare($sql)) {
             $stmt->execute();
@@ -24,7 +24,7 @@ class CatalogRepository
 
     public function getMundiales(): array
     {
-        $sql = 'CALL Seleccionar_Dato_Condicional(1);';
+        $sql = 'CALL SP_SeleccionarDatoCondicional(1);';
         $out = [];
         if ($stmt = $this->db->prepare($sql)) {
             $stmt->execute();
@@ -77,7 +77,7 @@ class CatalogRepository
 
     public function getWorldCupByID(int $mundialId): ?array
     {
-        $sql = 'SELECT * FROM V_Mundiales WHERE ID_Mundial = ?';
+        $sql = 'SELECT ID_Mundial, Nombre, Anio, Descripcion, Logo, Banner, Sede, Balon, Campeon, Subcampeon, TercerLugar, CuartoLugar, Fec_Final, Lugar_Final, Marcador_Final, TiempoExtra_Final, Goleador, Alineacion_Campeon, Cantante, Views, ID_User FROM V_Mundiales WHERE ID_Mundial = ?';
         $out = null;
         if ($stmt = $this->db->prepare($sql)) {
             $stmt->bind_param('i', $mundialId);
@@ -111,5 +111,103 @@ class CatalogRepository
         }
         while ($this->db->more_results() && $this->db->next_result()) {;}
         return $out;
+    }
+
+    // ========== MÉTODOS QUE USAN LAS NUEVAS VISTAS SQL ==========
+
+    /**
+     * Obtiene mundiales con estadísticas de publicaciones usando V_MundialesConEstadisticas
+     * Simplifica la consulta al incluir el conteo de publicaciones por mundial
+     * @return array Lista de mundiales con Total_Publicaciones
+     */
+    public function getWorldCupsWithStats(): array
+    {
+        $sql = 'SELECT ID_Mundial, Nombre, Anio, Sede, Campeon, Subcampeon, TercerLugar, CuartoLugar, Descripcion, Logo, Banner, Balon, Fec_Final, Lugar_Final, Marcador_Final, TiempoExtra_Final, Goleador, Alineacion_Campeon, Cantante, Views, ID_User, Total_Publicaciones FROM V_MundialesConEstadisticas ORDER BY Anio DESC';
+        $out = [];
+        
+        $result = $this->db->query($sql);
+        if ($result) {
+            $out = $result->fetch_all(MYSQLI_ASSOC);
+            $result->free();
+        }
+        
+        return $out;
+    }
+
+    /**
+     * Obtiene un mundial específico con estadísticas usando V_MundialesConEstadisticas
+     * @param int $mundialId ID del mundial
+     * @return array|null Datos del mundial con Total_Publicaciones
+     */
+    public function getWorldCupWithStats(int $mundialId): ?array
+    {
+        $sql = 'SELECT ID_Mundial, Nombre, Anio, Sede, Campeon, Subcampeon, TercerLugar, CuartoLugar, Descripcion, Logo, Banner, Balon, Fec_Final, Lugar_Final, Marcador_Final, TiempoExtra_Final, Goleador, Alineacion_Campeon, Cantante, Views, ID_User, Total_Publicaciones FROM V_MundialesConEstadisticas WHERE ID_Mundial = ?';
+        $out = null;
+        
+        if ($stmt = $this->db->prepare($sql)) {
+            $stmt->bind_param('i', $mundialId);
+            $stmt->execute();
+            $res = $stmt->get_result();
+            if ($res && $res->num_rows > 0) {
+                $out = $res->fetch_assoc();
+            }
+            $stmt->close();
+        }
+        
+        return $out;
+    }
+
+    /**
+     * Elimina una categoría por ID usando SP_DeleteCategory
+     * @param int $categoryId ID de la categoría a eliminar
+     * @return bool True si se eliminó correctamente
+     * @throws Exception Si hay publicaciones asociadas o error en BD
+     */
+    public function deleteCategory(int $categoryId): bool
+    {
+        $stmt = $this->db->prepare('CALL SP_DeleteCategory(?)');
+        if (!$stmt) {
+            throw new Exception('Error al preparar consulta: ' . $this->db->error);
+        }
+        
+        $stmt->bind_param('i', $categoryId);
+        
+        try {
+            $result = $stmt->execute();
+            $stmt->close();
+            while ($this->db->more_results() && $this->db->next_result()) {;}
+            return $result;
+        } catch (Exception $e) {
+            $stmt->close();
+            while ($this->db->more_results() && $this->db->next_result()) {;}
+            throw $e;
+        }
+    }
+
+    /**
+     * Elimina un mundial por ID usando SP_DeleteMundial
+     * @param int $mundialId ID del mundial a eliminar
+     * @return bool True si se eliminó correctamente
+     * @throws Exception Si error en BD
+     */
+    public function deleteMundial(int $mundialId): bool
+    {
+        $stmt = $this->db->prepare('CALL SP_DeleteMundial(?)');
+        if (!$stmt) {
+            throw new Exception('Error al preparar consulta: ' . $this->db->error);
+        }
+        
+        $stmt->bind_param('i', $mundialId);
+        
+        try {
+            $result = $stmt->execute();
+            $stmt->close();
+            while ($this->db->more_results() && $this->db->next_result()) {;}
+            return $result;
+        } catch (Exception $e) {
+            $stmt->close();
+            while ($this->db->more_results() && $this->db->next_result()) {;}
+            throw $e;
+        }
     }
 }

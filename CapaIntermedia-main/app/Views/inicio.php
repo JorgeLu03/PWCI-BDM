@@ -1,10 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Copa Mundial FIFA 2026</title>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <link href="../css/inicio.css" rel="stylesheet"/>
 <style data-injected="header-perfil">
 .header-profile-mini{display:inline-flex;align-items:center;gap:10px;padding:6px 10px;background:rgba(255,255,255,0.08);border-radius:999px;border:1px solid rgba(255,255,255,.15)}
@@ -27,6 +28,10 @@
 <style data-injected="publication-card-fix">
 .publication-card-media {position: relative;width: 100%;aspect-ratio: 16 / 9;background-color: #e0e0e0;overflow: hidden;}
 .publication-card-media img,.publication-card-media video {width: 100%;height: 100%;object-fit: cover;}
+</style>
+<style data-injected="admin-delete-publication">
+.admin-delete-publication{position:absolute;top:10px;right:10px;width:36px;height:36px;border-radius:50%;background:rgba(220,53,69,.9);border:2px solid #fff;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;transition:all .3s ease;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.admin-delete-publication:hover{background:rgba(200,35,51,1);transform:scale(1.1);box-shadow:0 4px 12px rgba(220,53,69,.4)}
 </style>
 </head>
 <body>
@@ -54,16 +59,15 @@
 </div>
 <ul>
 <li><a href="inicio.php"><i class="fas fa-home"></i> <span>Inicio</span></a></li>
-<li><a href="mis_publicaciones.php"><i class="fa-solid fa-user"></i> <span>Perfil</span></a></li>
 <li><a href="crear_publicacion.php"><i class="fa-solid fa-upload"></i> <span>Publicar</span></a></li>
 <?php if (!isset($_SESSION['user_id'])): ?>
-<li><a href="Iniciar_sesion.php"><i class="fa-solid fa-right-to-bracket"></i> <span>Iniciar Sesión</span></a></li>
+<li><a href="iniciar_sesion.php"><i class="fa-solid fa-right-to-bracket"></i> <span>Iniciar Sesión</span></a></li>
 <?php endif; ?>
 <?php if ($userType === 0): ?>
-<li><a href="administrar_publis.php"><i class="fa-solid fa-user-tie"></i> <span>Administrar</span></a></li>
+<li><a href="administrar_publicaciones.php"><i class="fa-solid fa-user-tie"></i> <span>Administrar</span></a></li>
 <?php endif; ?>
 <li><a href="mundiales.php"><i class="fas fa-trophy"></i> <span>Mundiales</span></a></li>
-<li><a href="categorías.php"><i class="fa-solid fa-tags"></i> <span>Categorías</span></a></li>
+<li><a href="categorias.php"><i class="fa-solid fa-tags"></i> <span>Categorías</span></a></li>
 </ul>
 </aside>
 <main class="main-content">
@@ -80,7 +84,13 @@
 <?php foreach($publications as $row): 
     $idPubli = htmlspecialchars($row['ID_Publi']);
     $titulo = htmlspecialchars($row['Titulo']);
-    $descripcionPlano = trim(preg_replace('/\s+/', ' ', strip_tags($row['Descripcion'])));
+    // Decodificar entidades HTML
+    $descDecodificado = html_entity_decode($row['Descripcion'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    // Convertir etiquetas de bloque en saltos de línea
+    $descConSaltos = preg_replace('/<\/(p|div|h[1-6]|li|br)>/i', "\n", $descDecodificado);
+    $descConSaltos = preg_replace('/<br\s*\/?>/i', "\n", $descConSaltos);
+    // Quitar etiquetas y normalizar espacios
+    $descripcionPlano = trim(preg_replace('/\s+/', ' ', strip_tags($descConSaltos)));
     if (function_exists('mb_substr')) {
         $descripcionCorta = mb_substr($descripcionPlano, 0, 80);
         $descLen = function_exists('mb_strlen') ? mb_strlen($descripcionPlano) : strlen($descripcionPlano);
@@ -88,9 +98,24 @@
         $descripcionCorta = substr($descripcionPlano, 0, 80);
         $descLen = strlen($descripcionPlano);
     }
-    $descripcionCorta = htmlspecialchars($descripcionCorta . ($descLen > 80 ? '...' : ''), ENT_QUOTES, 'UTF-8'); 
+    $descripcionCorta = htmlspecialchars($descripcionCorta . ($descLen > 80 ? '...' : ''), ENT_QUOTES, 'UTF-8');
+    
+    // Verificar si el usuario puede eliminar (admin o dueño)
+    $canDelete = false;
+    if (isset($_SESSION['user_id'])) {
+        $canDelete = ($userType === 0) || ($row['ID_User'] == $_SESSION['user_id']);
+    }
 ?>
-<a class="card-link" href="comentarios_publi.php?id=<?php echo $idPubli; ?>">
+<div style="position: relative;">
+    <?php if ($canDelete): ?>
+        <button class="admin-delete-publication" 
+                data-publication-id="<?php echo $idPubli; ?>" 
+                data-publication-title="<?php echo $titulo; ?>"
+                title="Eliminar publicación">
+            <i class="fas fa-trash"></i>
+        </button>
+    <?php endif; ?>
+<a class="card-link" href="comentarios_publicacion.php?id=<?php echo $idPubli; ?>">
 <article class="card publication-card">
 <div class="publication-card-media">
 <?php if (!empty($row['Multimedia']) && !empty($row['TipoMultimedia'])): ?>
@@ -113,6 +138,7 @@ $media_src = 'data:' . $media_type . ';base64,' . base64_encode($row['Multimedia
 </div>
 </article>
 </a>
+</div>
 <?php endforeach; ?>
 <?php else: ?>
 <p style='grid-column: 1 / -1; text-align: center; padding: 20px;'>No hay publicaciones disponibles en este momento.</p>
@@ -122,5 +148,55 @@ $media_src = 'data:' . $media_type . ';base64,' . base64_encode($row['Multimedia
 </main>
 </div>
 <script src="../javascript/inicio.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.admin-delete-publication');
+    if (btn) {
+      e.preventDefault();
+      e.stopPropagation();
+      const publicationId = btn.getAttribute('data-publication-id');
+      const publicationTitle = btn.getAttribute('data-publication-title');
+      Swal.fire({
+        title: '¿Eliminar publicación?',
+        html: `¿Estás seguro de que deseas eliminar "<strong>${publicationTitle}</strong>"?<br><br><small>Esta acción eliminará también todos los comentarios, reacciones y vistas asociadas.</small>`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          fetch('delete_publication_handler.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({id: publicationId})
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              Swal.fire({
+                title: '¡Eliminada!',
+                text: 'La publicación ha sido eliminada correctamente.',
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false
+              }).then(() => {
+                window.location.reload();
+              });
+            } else {
+              Swal.fire('Error', data.message || 'No se pudo eliminar la publicación', 'error');
+            }
+          })
+          .catch(err => {
+            Swal.fire('Error', 'Ocurrió un error al eliminar la publicación', 'error');
+          });
+        }
+      });
+    }
+  });
+});
+</script>
 </body>
 </html>

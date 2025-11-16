@@ -17,8 +17,8 @@ class WorldCupListController {
             $userDetails = $this->userRepo->getUserDetails($userId);
         }
         
-        // Get all world cups
-        $mundiales = $this->catalogRepo->getMundiales();
+        // Get all world cups con estadísticas usando V_MundialesConEstadisticas
+        $mundiales = $this->catalogRepo->getWorldCupsWithStats();
 
         // Load view
         if ($userDetails) {

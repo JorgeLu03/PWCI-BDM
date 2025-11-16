@@ -31,26 +31,51 @@ class EditPublicationController
         $error_message = '';
         // GET: obtener datos para editar; POST: actualizar
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $titulo = $_POST['Titulo'] ?? '';
-            $descripcion = $_POST['Descripcion'] ?? '';
+            $titulo = trim($_POST['Titulo'] ?? '');
+            $descripcion = trim($_POST['Descripcion'] ?? '');
             $idCateg = (int)($_POST['ID_categ'] ?? 0);
             $idMundial = (int)($_POST['ID_Mundial'] ?? 0);
 
             if (empty($titulo) || empty($descripcion) || empty($idCateg) || empty($idMundial)) {
                 $error_message = 'Por favor, completa todos los campos.';
+            }
+            // Validar longitud título
+            elseif (strlen($titulo) > 255) {
+                $error_message = 'El título no puede superar los 255 caracteres.';
+            }
+            // Validar longitud descripción
+            elseif (strlen($descripcion) > 65535) {
+                $error_message = 'La descripción es demasiado larga.';
             } else {
                 $mediaType = null;
                 $mediaTmpPath = null;
                 if (isset($_FILES['Multimedia']) && $_FILES['Multimedia']['error'] === UPLOAD_ERR_OK) {
                     $mediaType = $_FILES['Multimedia']['type'] ?? null;
                     $mediaTmpPath = $_FILES['Multimedia']['tmp_name'] ?? null;
+                    $mediaSize = $_FILES['Multimedia']['size'] ?? 0;
+                    
+                    // Validar tipo MIME
+                    $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/mpeg', 'video/quicktime'];
+                    if (!in_array($mediaType, $allowed_types)) {
+                        $error_message = 'Solo se permiten archivos de imagen o video válidos.';
+                    }
+                    // Validar tamaño
+                    elseif (strpos($mediaType, 'video/') === 0 && $mediaSize > 50 * 1024 * 1024) {
+                        $error_message = 'Los videos no pueden superar los 50MB.';
+                    }
+                    elseif (strpos($mediaType, 'image/') === 0 && $mediaSize > 10 * 1024 * 1024) {
+                        $error_message = 'Las imágenes no pueden superar los 10MB.';
+                    }
                 }
-                try {
-                    $pubRepo->updatePublication($pubId, $titulo, $descripcion, $mediaType, $mediaTmpPath, $idCateg, $idMundial);
-                    header('Location: mis_publicaciones.php?edit=success');
-                    exit;
-                } catch (RuntimeException $e) {
-                    $error_message = $e->getMessage();
+                
+                if (empty($error_message)) {
+                    try {
+                        $pubRepo->updatePublication($pubId, $titulo, $descripcion, $mediaType, $mediaTmpPath, $idCateg, $idMundial);
+                        header('Location: mis_publicaciones.php?edit=success');
+                        exit;
+                    } catch (RuntimeException $e) {
+                        $error_message = $e->getMessage();
+                    }
                 }
             }
         }
@@ -70,10 +95,8 @@ class EditPublicationController
         $userType = $user['userType'];
 
         // Renderizar vista
-        $error_message_local = $error_message; // para aislar nombre
-        // Usamos variables compactadas
-        $data = compact('displayName','photoSrc','userType','pub_data','categorias','mundiales','error_message_local');
+        $data = compact('displayName','photoSrc','userType','pub_data','categorias','mundiales','error_message');
         extract($data);
-        require __DIR__ . '/../Views/edit_publicacion.php';
+        require __DIR__ . '/../Views/editar_publicacion.php';
     }
 }

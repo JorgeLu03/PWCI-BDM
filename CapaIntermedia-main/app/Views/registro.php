@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" type="text/css" href="../css/inicio.css">
     <link rel="stylesheet" type="text/css" href="../css/login.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
     <main>
@@ -15,7 +16,17 @@
                 <form class="form" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" method="POST" enctype="multipart/form-data">
                     <h2 class="publicacion_titulo">Crea una cuenta</h2>
                     <?php if (!empty($error_message)): ?>
-                        <p style="color: #ffcccc; text-align: center; margin-bottom: 15px;"><?php echo htmlspecialchars($error_message); ?></p>
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error en el Registro',
+                                    text: '<?php echo addslashes($error_message); ?>',
+                                    confirmButtonColor: '#d33',
+                                    confirmButtonText: 'Entendido'
+                                });
+                            });
+                        </script>
                     <?php endif; ?>
                     <?php if (!empty($success_message)): ?>
                         <p style="color: #ccffcc; text-align: center; margin-bottom: 15px;"><?php echo htmlspecialchars($success_message); ?></p>
@@ -42,43 +53,27 @@
                             </div>
                         </div>
                         <div class="form_gruop">
-                            <label>Genero:</label>
-                            <input list="genero" name="genero" class="form_input" placeholder="Escribe o selecciona" required>
-                            <datalist id="genero">
-                                <option value="Masculino"></option>
-                                <option value="Femenino"></option>
-                                <option value="Otro"></option>
-                            </datalist>
+                            <label>Género:</label>
+                            <select name="genero" class="form_input" required>
+                                <option value="">Selecciona tu género</option>
+                                <option value="Masculino">Masculino</option>
+                                <option value="Femenino">Femenino</option>
+                                <option value="Otro">Otro</option>
+                            </select>
                             <span class="form_line"></span>
                         </div>
                         <div class="form_gruop">
                             <label>País de Nacimiento:</label>
-                            <input list="paises" name="pais" class="form_input" placeholder="Escribe o selecciona" required>
-                            <datalist id="paises">
-                                <option value="Argentina"></option>
-                                <option value="Brasil"></option>
-                                <option value="Canadá"></option>
-                                <option value="Chile"></option>
-                                <option value="Colombia"></option>
-                                <option value="Estados Unidos"></option>
-                                <option value="México"></option>
-                                <option value="España"></option>
-                            </datalist>
+                            <select id="pais" name="pais" class="form_input" required>
+                                <option value="">Cargando países...</option>
+                            </select>
                             <span class="form_line"></span>
                         </div>
                         <div class="form_gruop">
                             <label>Nacionalidad:</label>
-                            <input list="nacionalidad" name="nacionalidad" class="form_input" placeholder="Escribe o selecciona" required>
-                            <datalist id="nacionalidad">
-                                <option value="Argentina"></option>
-                                <option value="Brasil"></option>
-                                <option value="Canadá"></option>
-                                <option value="Chile"></option>
-                                <option value="Colombia"></option>
-                                <option value="Estados Unidos"></option>
-                                <option value="México"></option>
-                                <option value="España"></option>
-                            </datalist>
+                            <select id="nacionalidad" name="nacionalidad" class="form_input" required>
+                                <option value="">Cargando nacionalidades...</option>
+                            </select>
                             <span class="form_line"></span>
                         </div>
                         <div class="form_gruop">
@@ -101,7 +96,7 @@
                         </div>
 
                         <input type="submit" class="form_submit" value="Registrarme">
-                        <p style="text-align: center; margin: 20px 0 10px;">¿Ya tienes cuenta? <a href="Iniciar_sesion.php" style="text-decoration: underline;">Inicia Sesión</a></p>
+                        <p style="text-align: center; margin: 20px 0 10px;">¿Ya tienes cuenta? <a href="iniciar_sesion.php" style="text-decoration: underline;">Inicia Sesión</a></p>
                         <input type="button" class="form_submit" value="Regresar"
                             onclick="window.history.back()">
                     </div>

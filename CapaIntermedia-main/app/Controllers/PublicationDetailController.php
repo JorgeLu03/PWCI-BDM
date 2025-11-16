@@ -39,10 +39,12 @@ class PublicationDetailController
                 exit();
             }
 
-            // Obtener likes y comentarios
+            // Obtener likes y comentarios usando la nueva vista V_ComentariosPublicacion
             $like_count = $this->pubRepo->getLikeCount($publi_id);
             $user_has_liked = $current_user_id > 0 ? $this->pubRepo->checkUserLike($current_user_id, $publi_id) : false;
-            $comments = $this->pubRepo->getComments($publi_id);
+            
+            // Usar la vista V_ComentariosPublicacion que incluye info del usuario
+            $comments = $this->pubRepo->getCommentsWithUserInfo($publi_id, 2);
 
         } catch (Exception $e) {
             error_log("Error al obtener detalle de publicación: " . $e->getMessage());
@@ -62,6 +64,6 @@ class PublicationDetailController
             'current_user_id' => $current_user_id,
             'comments' => $comments
         ]);
-        require __DIR__ . '/../Views/comentarios_publi.php';
+        require __DIR__ . '/../Views/comentarios_publicacion.php';
     }
 }

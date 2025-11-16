@@ -22,10 +22,17 @@ class MyPublicationsController
 
         $userId = $_SESSION['user_id'];
         
-        // Obtener detalles del usuario
+        // Obtener detalles del usuario con edad calculada
         $userDetails = $this->userRepo->getUserDetails($userId);
         $displayName = $userDetails['displayName'];
         $photoSrc = $userDetails['photoSrc'];
+        $userType = $userDetails['userType'];
+
+        // Obtener estadísticas del usuario usando V_EstadisticasPublicaciones
+        $userStats = $this->pubRepo->getUserPublicationStats($userId);
+        
+        // También obtener edad usando la función FN_CalcularEdadUsuario
+        $userAge = $this->userRepo->getUserAge($userId);
 
         // Obtener publicaciones del usuario
         try {
@@ -39,7 +46,10 @@ class MyPublicationsController
         extract([
             'displayName' => $displayName,
             'photoSrc' => $photoSrc,
-            'user_publications' => $user_publications
+            'userType' => $userType,
+            'user_publications' => $user_publications,
+            'userStats' => $userStats,
+            'userAge' => $userAge
         ]);
         require __DIR__ . '/../Views/mis_publicaciones.php';
     }

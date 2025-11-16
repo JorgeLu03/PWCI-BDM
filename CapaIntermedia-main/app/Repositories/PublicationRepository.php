@@ -56,9 +56,9 @@ class PublicationRepository
 
     public function insertPublication(string $titulo, string $descripcion, int $estatus, int $views, ?string $fecAprob, string $fecPub, ?string $mediaType, ?string $mediaTmpPath, int $idCateg, int $idUser, int $idMundial): bool
     {
-        $stmt = $this->db->prepare('CALL Insertar_Publicacion(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        $stmt = $this->db->prepare('CALL SP_InsertarPublicacion(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
         if (!$stmt) {
-            throw new RuntimeException('Error al preparar Insertar_Publicacion: ' . $this->db->error);
+            throw new RuntimeException('Error al preparar SP_InsertarPublicacion: ' . $this->db->error);
         }
         $nullBlob = null;
         $stmt->bind_param('ssisssbsiii', $titulo, $descripcion, $estatus, $views, $fecAprob, $fecPub, $nullBlob, $mediaType, $idCateg, $idUser, $idMundial);
@@ -93,7 +93,7 @@ class PublicationRepository
     public function getApprovedPublications(string $sortBy = 'recent'): array
     {
         // Determinar qué procedimiento almacenado llamar
-        $sp = 'CALL Mostrar_Publicacion()';
+        $sp = 'CALL SP_MostrarPublicaciones()';
         if ($sortBy === 'likes') {
             $sp = 'CALL SP_GetPostsByLikes()';
         } elseif ($sortBy === 'comments') {
@@ -153,7 +153,7 @@ class PublicationRepository
     public function getPublicationDetail(int $publiId): ?array
     {
         // Incrementar vistas
-        $stmt_views = $this->db->prepare("CALL ACTUALIZAR_VISTAS(?)");
+        $stmt_views = $this->db->prepare("CALL SP_ActualizarVistas(?)");
         if ($stmt_views) {
             $stmt_views->bind_param('i', $publiId);
             $stmt_views->execute();
@@ -161,10 +161,10 @@ class PublicationRepository
             while ($this->db->more_results() && $this->db->next_result()) {;}
         }
 
-        // Obtener detalles de la publicación
-        $stmt = $this->db->prepare("CALL Mostrar_Publicacion_Especifica(?)");
+        // Obtener detalles de la publicación usando el SP
+        $stmt = $this->db->prepare("CALL SP_MostrarPublicacionEspecifica(?)");
         if (!$stmt) {
-            throw new RuntimeException('Error al preparar Mostrar_Publicacion_Especifica: ' . $this->db->error);
+            throw new RuntimeException('Error al preparar SP_MostrarPublicacionEspecifica: ' . $this->db->error);
         }
         $stmt->bind_param('i', $publiId);
         $stmt->execute();
@@ -172,6 +172,12 @@ class PublicationRepository
         $publication = ($result && $result->num_rows > 0) ? $result->fetch_assoc() : null;
         $stmt->close();
         while ($this->db->more_results() && $this->db->next_result()) {;}
+        
+        // Agregar ID_Publi que el SP no retorna
+        if ($publication !== null) {
+            $publication['ID_Publi'] = $publiId;
+        }
+        
         return $publication;
     }
 
@@ -450,5 +456,184 @@ class PublicationRepository
         $stmt->close();
         while ($this->db->more_results() && $this->db->next_result()) {;}
         return $status;
+    }
+
+    // ========== MÉTODOS QUE USAN LAS NUEVAS VISTAS Y FUNCIONES SQL ==========
+
+    /**
+     * Obtiene publicaciones con detalles completos usando V_PublicacionesConDetalles
+     * Simplifica los JOINs al traer publicaciones con categoría, mundial y usuario
+     * @param int $estatus Filtrar por estatus (1=Pendiente, 2=Aprobada, 3=Rechazada, 0=Todas)
+     * @param string $sortBy Ordenar por 'recent', 'likes', 'comments'
+     * @param int|null $limit Límite de resultados
+     * @return array Lista de publicaciones con detalles
+     */
+    public function getPublicationsWithDetails(int $estatus = 2, string $sortBy = 'recent', ?int $limit = null): array
+    {
+        $sql = "SELECT ID_Publi, Titulo, Descripcion, Estatus, Views, Fec_aprob, Fec_pub, Multimedia, TipoMultimedia, MotivoRechazo, ID_Categ, Nombre_Categoria, ID_Mundial, Nombre_Mundial, Anio_Mundial, ID_User, Nombre_Usuario, Foto_Usuario, LikeCount, CommentCount FROM V_PublicacionesConDetalles";
+        $conditions = [];
+        
+        if ($estatus > 0) {
+            $conditions[] = "Estatus = $estatus";
+        }
+        
+        if (!empty($conditions)) {
+            $sql .= " WHERE " . implode(' AND ', $conditions);
+        }
+        
+        // Ordenamiento
+        switch ($sortBy) {
+            case 'likes':
+                $sql .= " ORDER BY LikeCount DESC, Fec_pub DESC";
+                break;
+            case 'comments':
+                $sql .= " ORDER BY CommentCount DESC, Fec_pub DESC";
+                break;
+            default: // 'recent'
+                $sql .= " ORDER BY Fec_pub DESC";
+        }
+        
+        if ($limit !== null && $limit > 0) {
+            $sql .= " LIMIT $limit";
+        }
+        
+        $result = $this->db->query($sql);
+        if (!$result) {
+            throw new RuntimeException("Error al obtener publicaciones con detalles: " . $this->db->error);
+        }
+        
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Obtiene comentarios con información de usuario usando V_ComentariosPublicacion
+     * Reemplaza JOINs complejos para mostrar comentarios con datos del usuario
+     * @param int $publiId ID de la publicación
+     * @param int $estatusComentario Filtrar por estatus (1=Pendiente, 2=Aprobado, 0=Todos)
+     * @return array Lista de comentarios con información del usuario
+     */
+    public function getCommentsWithUserInfo(int $publiId, int $estatusComentario = 2): array
+    {
+        $sql = "SELECT ID_Coment, Contenido, Fecha_Comentario, Estatus, ID_Publi, ID_User, Nombre_Usuario, Foto_Usuario FROM V_ComentariosPublicacion WHERE ID_Publi = ?";
+        
+        if ($estatusComentario > 0) {
+            $sql .= " AND Estatus = ?";
+        }
+        
+        $sql .= " ORDER BY Fecha_Comentario DESC";
+        
+        $stmt = $this->db->prepare($sql);
+        if (!$stmt) {
+            throw new RuntimeException('Error al preparar consulta de comentarios: ' . $this->db->error);
+        }
+        
+        if ($estatusComentario > 0) {
+            $stmt->bind_param('ii', $publiId, $estatusComentario);
+        } else {
+            $stmt->bind_param('i', $publiId);
+        }
+        
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $comments = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        
+        return $comments;
+    }
+
+    /**
+     * Obtiene estadísticas de publicaciones por usuario usando V_EstadisticasPublicaciones
+     * @param int $userId ID del usuario
+     * @return array|null Estadísticas del usuario (total publicaciones, aprobadas, pendientes, rechazadas, likes, comentarios)
+     */
+    public function getUserPublicationStats(int $userId): ?array
+    {
+        $sql = "SELECT ID_User, Nombre_Usuario, Total_Publicaciones, Publicaciones_Aprobadas, Publicaciones_Pendientes, Publicaciones_Rechazadas, Total_Vistas, Promedio_Vistas FROM V_EstadisticasPublicaciones WHERE ID_User = ?";
+        $stmt = $this->db->prepare($sql);
+        
+        if (!$stmt) {
+            throw new RuntimeException('Error al preparar consulta de estadísticas: ' . $this->db->error);
+        }
+        
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $stats = ($result && $result->num_rows > 0) ? $result->fetch_assoc() : null;
+        $stmt->close();
+        
+        return $stats;
+    }
+
+    /**
+     * Obtiene el top de publicaciones más populares usando V_PublicacionesConDetalles
+     * @param int $limit Número de publicaciones a retornar
+     * @return array Top publicaciones ordenadas por likes y comentarios
+     */
+    public function getTopPublications(int $limit = 10): array
+    {
+        $sql = "SELECT ID_Publi, Titulo, Descripcion, Estatus, Views, Fec_aprob, Fec_pub, Multimedia, TipoMultimedia, MotivoRechazo, ID_Categ, Nombre_Categoria, ID_Mundial, Nombre_Mundial, Anio_Mundial, ID_User, Nombre_Usuario, Foto_Usuario, LikeCount, CommentCount FROM V_PublicacionesConDetalles 
+                WHERE Estatus = 2 
+                ORDER BY (LikeCount + CommentCount) DESC, Fec_pub DESC 
+                LIMIT ?";
+        
+        $stmt = $this->db->prepare($sql);
+        if (!$stmt) {
+            throw new RuntimeException('Error al preparar consulta de top publicaciones: ' . $this->db->error);
+        }
+        
+        $stmt->bind_param('i', $limit);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $publications = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        
+        return $publications;
+    }
+
+    /**
+     * Elimina una publicación completamente incluyendo comentarios, likes y vistas
+     * @param int $publicationId ID de la publicación a eliminar
+     * @return bool True si se eliminó correctamente
+     * @throws Exception Si error en BD
+     */
+    public function deletePublicationComplete(int $publicationId): bool
+    {
+        $stmt = $this->db->prepare('CALL SP_DeletePublicationComplete(?)');
+        if (!$stmt) {
+            throw new Exception('Error al preparar consulta: ' . $this->db->error);
+        }
+        
+        $stmt->bind_param('i', $publicationId);
+        
+        try {
+            if (!$stmt->execute()) {
+                throw new Exception('Error al ejecutar SP: ' . $stmt->error);
+            }
+            
+            $result = $stmt->get_result();
+            $success = false;
+            
+            if ($result) {
+                $row = $result->fetch_assoc();
+                if ($row && isset($row['success'])) {
+                    $success = $row['success'] == 1;
+                }
+            }
+            
+            $stmt->close();
+            while ($this->db->more_results() && $this->db->next_result()) {;}
+            
+            if (!$success) {
+                throw new Exception('El procedimiento no retornó éxito');
+            }
+            
+            return $success;
+        } catch (Exception $e) {
+            if (isset($stmt)) {
+                $stmt->close();
+            }
+            while ($this->db->more_results() && $this->db->next_result()) {;}
+            throw $e;
+        }
     }
 }

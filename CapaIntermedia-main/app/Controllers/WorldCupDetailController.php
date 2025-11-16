@@ -26,8 +26,8 @@ class WorldCupDetailController {
             $sort_by = 'recent';
         }
 
-        // Get mundial details
-        $mundial_details = $this->catalogRepo->getWorldCupByID($mundial_id);
+        // Get mundial details con estadísticas usando V_MundialesConEstadisticas
+        $mundial_details = $this->catalogRepo->getWorldCupWithStats($mundial_id);
         
         // If mundial not found, redirect to list
         if ($mundial_details === null) {
@@ -53,6 +53,6 @@ class WorldCupDetailController {
         if ($userDetails) {
             extract($userDetails);
         }
-        require __DIR__ . '/../Views/mundial_detalle.php';
+        require __DIR__ . '/../Views/detalle_mundial.php';
     }
 }

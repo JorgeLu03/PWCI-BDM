@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="utf-8"/>
@@ -139,60 +139,44 @@
 <!-- Genero -->
 <div class="form_gruop">
     <label for="genero_input">Género:</label>
-    <input class="form_input" id="genero_input" list="genero" name="genero" placeholder="Escribe o selecciona" value="<?php echo htmlspecialchars($userData['Genero'] ?? ''); ?>"/>
-    <datalist id="genero">
-        <option value="Masculino"></option>
-        <option value="Femenino"></option>
-        <option value="Otro"></option>
-    </datalist>
+    <select class="form_input" id="genero_input" name="genero" required>
+        <option value="">Selecciona tu género</option>
+        <option value="Masculino" <?php echo (isset($userData['Genero']) && $userData['Genero'] === 'Masculino') ? 'selected' : ''; ?>>Masculino</option>
+        <option value="Femenino" <?php echo (isset($userData['Genero']) && $userData['Genero'] === 'Femenino') ? 'selected' : ''; ?>>Femenino</option>
+        <option value="Otro" <?php echo (isset($userData['Genero']) && $userData['Genero'] === 'Otro') ? 'selected' : ''; ?>>Otro</option>
+    </select>
     <span class="form_line"></span>
 </div>
 
 <!-- Pais de Nacimiento -->
 <div class="form_gruop">
     <label for="pais_input">País de Nacimiento:</label>
-    <input class="form_input" id="pais_input" list="paises" name="pais" placeholder="Escribe o selecciona" value="<?php echo htmlspecialchars($userData['Pais_de_nac'] ?? ''); ?>"/>
-    <datalist id="paises">
-        <option value="Argentina"></option>
-        <option value="Brasil"></option>
-        <option value="Canadá"></option>
-        <option value="Chile"></option>
-        <option value="Colombia"></option>
-        <option value="Estados Unidos"></option>
-        <option value="México"></option>
-        <option value="España"></option>
-    </datalist>
+    <select class="form_input" id="pais_input" name="pais" required data-current="<?php echo htmlspecialchars($userData['Pais_de_nac'] ?? ''); ?>">
+        <option value="">Cargando países...</option>
+    </select>
     <span class="form_line"></span>
 </div>
 
 <!-- Nacionalidad -->
 <div class="form_gruop">
     <label for="nacionalidad_input">Nacionalidad:</label>
-    <input class="form_input" id="nacionalidad_input" list="nacionalidad" name="nacionalidad" placeholder="Escribe o selecciona" value="<?php echo htmlspecialchars($userData['Nacionalidad'] ?? ''); ?>"/>
-    <datalist id="nacionalidad">
-        <option value="Argentina"></option>
-        <option value="Brasil"></option>
-        <option value="Canadá"></option>
-        <option value="Chile"></option>
-        <option value="Colombia"></option>
-        <option value="Estados Unidos"></option>
-        <option value="México"></option>
-        <option value="España"></option>
-    </datalist>
+    <select class="form_input" id="nacionalidad_input" name="nacionalidad" required data-current="<?php echo htmlspecialchars($userData['Nacionalidad'] ?? ''); ?>">
+        <option value="">Cargando nacionalidades...</option>
+    </select>
     <span class="form_line"></span>
 </div>
 
 <!-- Correo Electronico -->
 <div class="form_gruop">
     <label for="correo">Correo:</label>
-    <input class="form_input" id="correo" name="correo" placeholder="Correo electronico" required type="email" value="<?php echo htmlspecialchars($userData['Correo'] ?? ''); ?>"/>
+    <input class="form_input" id="correo" name="correo" placeholder="Correo electronico" required type="email" value="<?php echo htmlspecialchars($userData['Correo'] ?? ''); ?>" readonly style="background-color: rgba(255, 255, 255, 0.05); cursor: not-allowed;"/>
     <span class="form_line"></span>
 </div>
 
 <!-- Telefono -->
 <div class="form_gruop">
     <label for="telefono">Teléfono:</label>
-    <input class="form_input" id="telefono" name="telefono" placeholder="Teléfono" type="tel" value="<?php echo htmlspecialchars($userData['Telefono'] ?? ''); ?>"/>
+    <input class="form_input" id="telefono" name="telefono" placeholder="Teléfono" type="tel" value="<?php echo htmlspecialchars($userData['Telefono'] ?? ''); ?>" readonly style="background-color: rgba(255, 255, 255, 0.05); cursor: not-allowed;"/>
     <span class="form_line"></span>
 </div>
 

@@ -75,7 +75,7 @@ class AdminController
             'pending_publications' => $pending_publications,
             'pending_comments' => $pending_comments
         ]);
-        require __DIR__ . '/../Views/administrar_publis.php';
+        require __DIR__ . '/../Views/administrar_publicaciones.php';
     }
 
     private function handleCreateCategory(): void
@@ -109,7 +109,7 @@ class AdminController
             $_SESSION['feedback_type'] = 'error';
         }
         
-        header("Location: administrar_publis.php?tab=create");
+        header("Location: administrar_publicaciones.php?tab=create");
         exit();
     }
 
@@ -133,10 +133,14 @@ class AdminController
         $cantante = $_POST['mundial_cantante'] ?? null;
         $id_user = $_SESSION['user_id'] ?? 0;
 
+        // Cargar PlaceHolder3.jpg si no se proporciona logo o banner
+        $placeholder_path = __DIR__ . '/../../css/PlaceHolder3.jpg';
+        $placeholder_data = file_exists($placeholder_path) ? file_get_contents($placeholder_path) : null;
+
         $logo_data = (isset($_FILES['mundial_logo']) && $_FILES['mundial_logo']['error'] == 0) 
-            ? file_get_contents($_FILES['mundial_logo']['tmp_name']) : null;
+            ? file_get_contents($_FILES['mundial_logo']['tmp_name']) : $placeholder_data;
         $banner_data = (isset($_FILES['mundial_banner']) && $_FILES['mundial_banner']['error'] == 0) 
-            ? file_get_contents($_FILES['mundial_banner']['tmp_name']) : null;
+            ? file_get_contents($_FILES['mundial_banner']['tmp_name']) : $placeholder_data;
 
         $stmt = $this->db->prepare("CALL SP_NewMundial(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         if ($stmt) {
@@ -163,7 +167,7 @@ class AdminController
             while ($this->db->more_results() && $this->db->next_result()) {;}
         }
         
-        header("Location: administrar_publis.php?tab=create");
+        header("Location: administrar_publicaciones.php?tab=create");
         exit();
     }
 }

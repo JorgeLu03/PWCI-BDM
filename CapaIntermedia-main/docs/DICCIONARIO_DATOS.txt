@@ -1,0 +1,433 @@
+═══════════════════════════════════════════════════════════════════════════════
+                    DICCIONARIO DE DATOS - PROYECTO BDM-PWCI
+                    FIFA World Cup 2026 Social Platform (GolNet)
+═══════════════════════════════════════════════════════════════════════════════
+
+Proyecto: Sistema de gestión de contenido multimedia sobre mundiales de fútbol
+Autor: [Tu Nombre y Matrícula]
+Fecha: 14 de Noviembre de 2025
+Base de Datos: bdmpwci2
+Motor: MariaDB 10.4.32 / MySQL
+Charset: utf8mb4_general_ci
+
+═══════════════════════════════════════════════════════════════════════════════
+TABLA 1: usuario
+═══════════════════════════════════════════════════════════════════════════════
+Descripción: Almacena la información de los usuarios registrados en el sistema.
+Los usuarios pueden ser de tipo normal o administrador. Solo mayores de 12 años
+pueden registrarse.
+
+┌─────────────────┬──────────────┬──────────────────────────┬────────────────────────────────────────────┬────────────────────────┐
+│ CAMPO           │ TIPO DE DATO │ DOMINIO                  │ DESCRIPCIÓN                                │ RESTRICCIONES          │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ ID_User         │ INT(11)      │ 1 - 2147483647           │ Identificador único del usuario            │ PK, AUTO_INCREMENT,    │
+│                 │              │                          │                                            │ NOT NULL               │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Correo          │ VARCHAR(100) │ Email válido, formato:   │ Correo electrónico del usuario para        │ UNIQUE, NOT NULL       │
+│                 │              │ usuario@dominio.com      │ inicio de sesión                           │                        │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Telefono        │ VARCHAR(20)  │ 10-15 dígitos numéricos  │ Número telefónico de contacto              │ NULL permitido         │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Contrasena      │ VARCHAR(255) │ Hash SHA2-256 (64 chars) │ Contraseña encriptada del usuario.         │ NOT NULL               │
+│                 │              │                          │ Debe contener: mayúscula, minúscula,       │                        │
+│                 │              │                          │ número y carácter especial                 │                        │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Fec_nac         │ DATE         │ Fecha >= 12 años antes   │ Fecha de nacimiento del usuario.           │ NOT NULL               │
+│                 │              │ de hoy (formato:         │ Solo mayores de 12 años pueden             │                        │
+│                 │              │ YYYY-MM-DD)              │ registrarse                                │                        │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Tipo_usuario    │ BOOLEAN      │ 0 (Usuario normal)       │ Tipo de usuario: 0=Normal, 1=Admin.        │ NOT NULL, DEFAULT 0    │
+│                 │              │ 1 (Administrador)        │ Los admin pueden aprobar publicaciones     │                        │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Nombre          │ VARCHAR(100) │ 1-100 caracteres         │ Nombre completo del usuario                │ NOT NULL               │
+│                 │              │ alfabéticos              │                                            │                        │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Foto            │ MEDIUMBLOB   │ Imagen binaria hasta     │ Fotografía de perfil del usuario           │ NULL permitido         │
+│                 │              │ 16MB (JPEG, PNG)         │ almacenada como BLOB                       │ DEFAULT NULL           │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Pais_de_nac     │ VARCHAR(50)  │ Nombre de país válido    │ País de nacimiento del usuario             │ NOT NULL               │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Genero          │ VARCHAR(20)  │ "Masculino", "Femenino", │ Género del usuario                         │ NOT NULL               │
+│                 │              │ "Otro"                   │                                            │                        │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Nacionalidad    │ VARCHAR(50)  │ Nombre de nacionalidad   │ Nacionalidad del usuario                   │ NOT NULL               │
+│                 │              │ válida                   │                                            │                        │
+└─────────────────┴──────────────┴──────────────────────────┴────────────────────────────────────────────┴────────────────────────┘
+
+Reglas de Negocio:
+- El correo debe ser único en el sistema
+- La edad mínima para registro es de 12 años
+- La contraseña se almacena encriptada con SHA2-256
+- Por defecto los usuarios son tipo normal (Tipo_usuario = 0)
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TABLA 2: categoria
+═══════════════════════════════════════════════════════════════════════════════
+Descripción: Catálogo de categorías para clasificar las publicaciones
+(ej: Jugadas, Entrevistas, Partidos, Estadísticas, etc.)
+
+┌─────────────────┬──────────────┬──────────────────────────┬────────────────────────────────────────────┬────────────────────────┐
+│ CAMPO           │ TIPO DE DATO │ DOMINIO                  │ DESCRIPCIÓN                                │ RESTRICCIONES          │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ ID_Categ        │ INT(11)      │ 1 - 2147483647           │ Identificador único de la categoría        │ PK, AUTO_INCREMENT,    │
+│                 │              │                          │                                            │ NOT NULL               │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Nombre          │ VARCHAR(100) │ 1-100 caracteres         │ Nombre de la categoría                     │ NOT NULL               │
+│                 │              │ alfanuméricos            │                                            │                        │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Descripcion     │ VARCHAR(100) │ 0-100 caracteres         │ Descripción breve de la categoría          │ NOT NULL               │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Imagen          │ MEDIUMBLOB   │ Imagen binaria hasta     │ Imagen representativa de la categoría      │ NULL permitido         │
+│                 │              │ 16MB (JPEG, PNG)         │                                            │ DEFAULT NULL           │
+└─────────────────┴──────────────┴──────────────────────────┴────────────────────────────────────────────┴────────────────────────┘
+
+Reglas de Negocio:
+- Cada categoría debe tener un nombre único descriptivo
+- Solo administradores pueden crear categorías
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TABLA 3: mundial
+═══════════════════════════════════════════════════════════════════════════════
+Descripción: Almacena información detallada de cada Copa Mundial de Fútbol FIFA,
+incluyendo datos históricos, estadísticas y multimedia.
+
+┌─────────────────────┬──────────────┬──────────────────────────┬────────────────────────────────────────────┬────────────────────────┐
+│ CAMPO               │ TIPO DE DATO │ DOMINIO                  │ DESCRIPCIÓN                                │ RESTRICCIONES          │
+├─────────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ ID_Mundial          │ INT(11)      │ 1 - 2147483647           │ Identificador único del mundial            │ PK, AUTO_INCREMENT,    │
+│                     │              │                          │                                            │ NOT NULL               │
+├─────────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Nombre              │ VARCHAR(100) │ 1-100 caracteres         │ Nombre oficial del mundial                 │ NOT NULL               │
+│                     │              │ Ej: "Mundial México 1986"│                                            │                        │
+├─────────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Anio                │ YEAR(4)      │ 1930 - 2026              │ Año en que se celebró el mundial           │ NOT NULL               │
+├─────────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Descripcion         │ TEXT         │ 0-65535 caracteres       │ Reseña histórica del mundial               │ NULL permitido         │
+├─────────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Logo                │ MEDIUMBLOB   │ Imagen binaria hasta     │ Logotipo oficial del mundial               │ NULL permitido         │
+│                     │              │ 16MB (JPEG, PNG)         │                                            │                        │
+├─────────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Banner              │ MEDIUMBLOB   │ Imagen binaria hasta     │ Banner/imagen promocional del mundial      │ NULL permitido         │
+│                     │              │ 16MB (JPEG, PNG)         │                                            │                        │
+├─────────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Sede                │ VARCHAR(100) │ Nombre de país(es)       │ País o países anfitriones del mundial      │ NOT NULL               │
+├─────────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Balon               │ VARCHAR(100) │ Nombre del balón oficial │ Balón oficial utilizado en el mundial      │ NULL permitido         │
+├─────────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Campeon             │ VARCHAR(100) │ Nombre de selección      │ Selección campeona del mundial             │ NULL permitido         │
+├─────────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Subcampeon          │ VARCHAR(100) │ Nombre de selección      │ Selección subcampeona                      │ NULL permitido         │
+├─────────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ TercerLugar         │ VARCHAR(100) │ Nombre de selección      │ Selección tercer lugar                     │ NULL permitido         │
+├─────────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ CuartoLugar         │ VARCHAR(100) │ Nombre de selección      │ Selección cuarto lugar                     │ NULL permitido         │
+├─────────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Fec_Final           │ DATE         │ Fecha válida formato     │ Fecha de la final del mundial              │ NULL permitido         │
+│                     │              │ YYYY-MM-DD               │                                            │                        │
+├─────────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Lugar_Final         │ VARCHAR(100) │ Nombre de estadio        │ Estadio donde se jugó la final             │ NULL permitido         │
+├─────────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Marcador_Final      │ VARCHAR(100) │ Formato: "X - Y"         │ Marcador de la final (ej: "3 - 2")         │ NULL permitido         │
+├─────────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ TiempoExtra_Final   │ TINYINT(1)   │ 0 (No)                   │ Indica si la final tuvo tiempo extra       │ NULL permitido         │
+│                     │              │ 1 (Sí)                   │ o penales                                  │ DEFAULT 0              │
+├─────────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Goleador            │ VARCHAR(100) │ Nombre de jugador        │ Máximo goleador del mundial                │ NULL permitido         │
+├─────────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Alineacion_Campeon  │ VARCHAR(100) │ Formato: "4-4-2", etc    │ Alineación táctica del campeón             │ NULL permitido         │
+├─────────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Cantante            │ VARCHAR(100) │ Nombre de artista        │ Artista de la canción oficial del mundial  │ NULL permitido         │
+├─────────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Views               │ INT(11)      │ 0 - 2147483647           │ Contador de visualizaciones de la página   │ NOT NULL, DEFAULT 0    │
+│                     │              │                          │ del mundial                                │                        │
+├─────────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ ID_User             │ INT(11)      │ ID válido de usuario     │ Usuario administrador que creó el registro │ FK → usuario(ID_User)  │
+│                     │              │                          │ del mundial                                │ NOT NULL               │
+└─────────────────────┴──────────────┴──────────────────────────┴────────────────────────────────────────────┴────────────────────────┘
+
+Reglas de Negocio:
+- Solo administradores pueden crear/editar mundiales
+- El año debe estar en el rango de mundiales FIFA (1930-2026)
+- FK: ID_User referencia a tabla usuario con ON UPDATE CASCADE
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TABLA 4: publicacion
+═══════════════════════════════════════════════════════════════════════════════
+Descripción: Almacena las publicaciones de contenido multimedia realizadas por
+los usuarios. Las publicaciones deben ser aprobadas por un administrador antes
+de ser visibles públicamente.
+
+┌─────────────────┬──────────────┬──────────────────────────┬────────────────────────────────────────────┬────────────────────────┐
+│ CAMPO           │ TIPO DE DATO │ DOMINIO                  │ DESCRIPCIÓN                                │ RESTRICCIONES          │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ ID_Publi        │ INT(11)      │ 1 - 2147483647           │ Identificador único de la publicación      │ PK, AUTO_INCREMENT,    │
+│                 │              │                          │                                            │ NOT NULL               │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Titulo          │ VARCHAR(255) │ 1-255 caracteres         │ Título de la publicación                   │ NOT NULL               │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Descripcion     │ TEXT         │ 1-65535 caracteres       │ Descripción o contenido de la publicación  │ NOT NULL               │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Estatus         │ TINYINT(1)   │ 1 (Pendiente)            │ Estado de la publicación:                  │ NOT NULL, DEFAULT 1    │
+│                 │              │ 2 (Aprobada)             │ 1=Pendiente aprobación, 2=Aprobada,        │                        │
+│                 │              │ 3 (Rechazada)            │ 3=Rechazada                                │                        │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Views           │ INT(11)      │ 0 - 2147483647           │ Contador de visualizaciones                │ NOT NULL, DEFAULT 0    │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Fec_aprob       │ DATE         │ Fecha válida o NULL      │ Fecha de aprobación por el administrador   │ NULL permitido         │
+│                 │              │ formato YYYY-MM-DD       │ (se llena automáticamente con trigger)     │                        │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Fec_pub         │ DATE         │ Fecha válida             │ Fecha de creación de la publicación        │ NOT NULL               │
+│                 │              │ formato YYYY-MM-DD       │                                            │                        │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Multimedia      │ LONGBLOB     │ Archivo binario hasta    │ Archivo multimedia (imagen o video)        │ NOT NULL               │
+│                 │              │ 4GB (JPEG, PNG, MP4)     │ almacenado como BLOB                       │                        │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ TipoMultimedia  │ VARCHAR(50)  │ MIME types:              │ Tipo de contenido multimedia               │ NOT NULL               │
+│                 │              │ "image/jpeg",            │                                            │                        │
+│                 │              │ "image/png",             │                                            │                        │
+│                 │              │ "video/mp4"              │                                            │                        │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ MotivoRechazo   │ TEXT         │ 0-65535 caracteres       │ Razón del rechazo si Estatus = 3           │ NULL permitido         │
+│                 │              │ o NULL                   │                                            │                        │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ ID_Categ        │ INT(11)      │ ID válido de categoría   │ Categoría de la publicación                │ FK → categoria         │
+│                 │              │                          │                                            │ (ID_Categ), NOT NULL   │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ ID_User         │ INT(11)      │ ID válido de usuario     │ Usuario que creó la publicación            │ FK → usuario(ID_User)  │
+│                 │              │                          │                                            │ NOT NULL               │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ ID_Mundial      │ INT(11)      │ ID válido de mundial     │ Mundial al que pertenece la publicación    │ FK → mundial           │
+│                 │              │ o NULL                   │                                            │ (ID_Mundial), NULL     │
+└─────────────────┴──────────────┴──────────────────────────┴────────────────────────────────────────────┴────────────────────────┘
+
+Reglas de Negocio:
+- Las publicaciones inician con Estatus = 1 (Pendiente)
+- Solo usuarios administradores pueden cambiar el estatus
+- Trigger TRG_ActualizarFechaAprobacion actualiza automáticamente Fec_aprob cuando Estatus cambia a 2
+- FK: ID_Categ referencia a categoria con ON UPDATE CASCADE
+- FK: ID_User referencia a usuario con ON UPDATE CASCADE
+- FK: ID_Mundial referencia a mundial con ON DELETE SET NULL, ON UPDATE CASCADE
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TABLA 5: comentario
+═══════════════════════════════════════════════════════════════════════════════
+Descripción: Almacena los comentarios que los usuarios hacen sobre las
+publicaciones aprobadas.
+
+┌─────────────────┬──────────────┬──────────────────────────┬────────────────────────────────────────────┬────────────────────────┐
+│ CAMPO           │ TIPO DE DATO │ DOMINIO                  │ DESCRIPCIÓN                                │ RESTRICCIONES          │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ ID_Coment       │ INT(11)      │ 1 - 2147483647           │ Identificador único del comentario         │ PK, AUTO_INCREMENT,    │
+│                 │              │                          │                                            │ NOT NULL               │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Contenido       │ TEXT         │ 1-65535 caracteres       │ Texto del comentario                       │ NOT NULL               │
+│                 │              │ no vacío                 │                                            │                        │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Fec             │ DATETIME     │ Fecha y hora válidas     │ Fecha y hora de creación del comentario    │ NOT NULL               │
+│                 │              │ formato: YYYY-MM-DD      │ (se establece automáticamente)             │ DEFAULT CURRENT_       │
+│                 │              │ HH:MM:SS                 │                                            │ TIMESTAMP              │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Estatus         │ TINYINT(1)   │ 1 (Pendiente)            │ Estado del comentario:                     │ NOT NULL, DEFAULT 1    │
+│                 │              │ 2 (Aprobado)             │ 1=Pendiente, 2=Aprobado                    │                        │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ ID_User         │ INT(11)      │ ID válido de usuario     │ Usuario que escribió el comentario         │ FK → usuario(ID_User)  │
+│                 │              │                          │                                            │ NOT NULL               │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ ID_Publi        │ INT(11)      │ ID válido de publicación │ Publicación comentada                      │ FK → publicacion       │
+│                 │              │                          │                                            │ (ID_Publi), NOT NULL   │
+└─────────────────┴──────────────┴──────────────────────────┴────────────────────────────────────────────┴────────────────────────┘
+
+Reglas de Negocio:
+- Trigger TRG_ValidarComentario valida que el contenido no esté vacío antes de insertar
+- Solo administradores pueden eliminar comentarios
+- FK: ID_User referencia a usuario con ON UPDATE CASCADE
+- FK: ID_Publi referencia a publicacion con ON DELETE CASCADE, ON UPDATE CASCADE
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TABLA 6: usuario_reaccion
+═══════════════════════════════════════════════════════════════════════════════
+Descripción: Registra las reacciones (likes) de los usuarios sobre las
+publicaciones. Implementa una relación muchos a muchos entre usuario y
+publicación.
+
+┌─────────────────┬──────────────┬──────────────────────────┬────────────────────────────────────────────┬────────────────────────┐
+│ CAMPO           │ TIPO DE DATO │ DOMINIO                  │ DESCRIPCIÓN                                │ RESTRICCIONES          │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ ID_User         │ INT(11)      │ ID válido de usuario     │ Usuario que dio la reacción                │ PK (compuesta),        │
+│                 │              │                          │                                            │ FK → usuario(ID_User)  │
+│                 │              │                          │                                            │ NOT NULL               │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ ID_Publi        │ INT(11)      │ ID válido de publicación │ Publicación que recibió la reacción        │ PK (compuesta),        │
+│                 │              │                          │                                            │ FK → publicacion       │
+│                 │              │                          │                                            │ (ID_Publi), NOT NULL   │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ Estatus         │ CHAR(1)      │ 'L' (Like)               │ Tipo de reacción. Actualmente solo         │ NOT NULL, DEFAULT 'L'  │
+│                 │              │                          │ se usa 'L' para likes                      │                        │
+└─────────────────┴──────────────┴──────────────────────────┴────────────────────────────────────────────┴────────────────────────┘
+
+Reglas de Negocio:
+- Un usuario solo puede dar un like por publicación
+- Si se vuelve a ejecutar toggle, se elimina el registro (unlike)
+- PK compuesta (ID_User, ID_Publi) garantiza unicidad
+- FK: ID_User referencia a usuario con ON DELETE CASCADE, ON UPDATE CASCADE
+- FK: ID_Publi referencia a publicacion con ON DELETE CASCADE, ON UPDATE CASCADE
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TABLA 7: vistas
+═══════════════════════════════════════════════════════════════════════════════
+Descripción: Registra las visualizaciones de las publicaciones por usuario para
+llevar estadísticas de vistas únicas.
+
+┌─────────────────┬──────────────┬──────────────────────────┬────────────────────────────────────────────┬────────────────────────┐
+│ CAMPO           │ TIPO DE DATO │ DOMINIO                  │ DESCRIPCIÓN                                │ RESTRICCIONES          │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ FK_PUBLICACION  │ INT(11)      │ ID válido de publicación │ Publicación visualizada                    │ PK (compuesta),        │
+│                 │              │                          │                                            │ FK → publicacion       │
+│                 │              │                          │                                            │ (ID_Publi), NOT NULL   │
+├─────────────────┼──────────────┼──────────────────────────┼────────────────────────────────────────────┼────────────────────────┤
+│ FK_USUARIO      │ INT(11)      │ ID válido de usuario     │ Usuario que visualizó la publicación       │ PK (compuesta),        │
+│                 │              │                          │                                            │ FK → usuario(ID_User)  │
+│                 │              │                          │                                            │ NOT NULL               │
+└─────────────────┴──────────────┴──────────────────────────┴────────────────────────────────────────────┴────────────────────────┘
+
+Reglas de Negocio:
+- Cada combinación usuario-publicación se registra solo una vez
+- Se usa INSERT IGNORE para evitar duplicados
+- PK compuesta (FK_PUBLICACION, FK_USUARIO) garantiza unicidad
+- FK: FK_PUBLICACION referencia a publicacion
+- FK: FK_USUARIO referencia a usuario
+
+
+═══════════════════════════════════════════════════════════════════════════════
+ELEMENTOS SQL AVANZADOS
+═══════════════════════════════════════════════════════════════════════════════
+
+FUNCIONES (2):
+
+1. FN_CalcularEdadUsuario(p_ID_User INT) RETURNS INT
+   Descripción: Calcula la edad actual de un usuario en años completos
+   Parámetro: ID del usuario
+   Retorna: Edad en años (INT) o NULL si no existe fecha de nacimiento
+   Uso: SELECT FN_CalcularEdadUsuario(15) AS edad;
+
+2. FN_ContarPublicacionesPorEstado(p_ID_User INT, p_Estatus TINYINT) RETURNS INT
+   Descripción: Cuenta las publicaciones de un usuario filtradas por estado
+   Parámetros: ID del usuario, estado (1=Pendiente, 2=Aprobada, 3=Rechazada)
+   Retorna: Cantidad de publicaciones (INT)
+   Uso: SELECT FN_ContarPublicacionesPorEstado(15, 2) AS aprobadas;
+
+
+TRIGGERS (2):
+
+1. TRG_ActualizarFechaAprobacion
+   Tabla: publicacion
+   Evento: BEFORE UPDATE
+   Descripción: Actualiza automáticamente Fec_aprob cuando Estatus cambia a 2 (Aprobada)
+                y la limpia cuando cambia a 3 (Rechazada)
+
+2. TRG_ValidarComentario
+   Tabla: comentario
+   Evento: BEFORE INSERT
+   Descripción: Valida que el contenido del comentario no esté vacío antes de insertar.
+                Establece fecha actual y estatus por defecto si no se proporcionan.
+
+
+VISTAS (8):
+
+1. V_Categorias
+   Descripción: Lista de categorías ordenadas alfabéticamente
+   Uso: Listado de categorías disponibles
+
+2. V_DetallesUsuario
+   Descripción: Información de usuarios sin datos sensibles (contraseña)
+   Uso: Perfiles públicos de usuarios
+
+3. V_Mundiales
+   Descripción: Información completa de mundiales
+   Uso: Listado y detalle de mundiales
+
+4. V_Publicaciones
+   Descripción: Publicaciones con JOIN de categoría, mundial y usuario, incluye conteos
+   Uso: Listado principal de publicaciones
+
+5. V_EstadisticasPublicaciones
+   Descripción: Estadísticas agregadas por usuario (totales, aprobadas, pendientes, vistas)
+   Uso: Dashboard de usuario, perfiles con estadísticas
+
+6. V_ComentariosPublicacion
+   Descripción: Comentarios con información completa del usuario que comentó
+   Uso: Mostrar comentarios en publicaciones
+
+7. V_PublicacionesConDetalles
+   Descripción: Publicaciones con todos los detalles completos (categoría, mundial, usuario, contadores)
+   Uso: Simplifica queries complejas con múltiples JOINs
+
+8. V_MundialesConEstadisticas
+   Descripción: Mundiales con contador de publicaciones asociadas
+   Uso: Listado de mundiales con cantidad de contenido disponible
+
+
+═══════════════════════════════════════════════════════════════════════════════
+STORED PROCEDURES PRINCIPALES (23 total)
+═══════════════════════════════════════════════════════════════════════════════
+
+Gestión de Usuarios:
+- SP_NewUser: Registro de nuevo usuario con contraseña encriptada
+- SP_InicSes: Inicio de sesión validando credenciales
+- SP_ModUser: Modificación de perfil de usuario
+- SP_GetUserDetails: Obtener detalles públicos de usuario
+- SP_DelUsuario: Eliminación de usuario
+
+Gestión de Publicaciones:
+- SP_InsertarPublicacion: Crear nueva publicación
+- SP_UpdatePublication: Modificar publicación existente
+- SP_MostrarPublicaciones: Listar publicaciones aprobadas
+- SP_GetPostsByLikes: Publicaciones ordenadas por likes
+- SP_GetPostsByComments: Publicaciones ordenadas por comentarios
+- SP_GetPostsByCategory: Filtrar por categoría
+- SP_GetPostsByMundial: Filtrar por mundial
+- SP_UpdatePublicationStatus: Cambiar estado de publicación (admin)
+- SP_GetPublicationForEdit: Obtener publicación para edición
+
+Gestión de Comentarios:
+- SP_AgregarComentario: Agregar nuevo comentario
+- SP_GetPendingComments: Listar comentarios pendientes (admin)
+- SP_UpdateCommentStatus: Aprobar/rechazar comentario (admin)
+- SP_DeleteCommentByAdmin: Eliminar comentario (admin)
+
+Gestión de Reacciones:
+- SP_ToggleLike: Dar/quitar like a publicación
+- SP_GetLikers: Obtener usuarios que dieron like
+- SP_GetCommenters: Obtener usuarios que comentaron
+
+Catálogos:
+- SP_SeleccionarDatoCondicional: Obtener categorías o mundiales
+- SP_NewCategory: Crear nueva categoría (admin)
+- SP_NewMundial: Crear nuevo mundial (admin)
+
+
+═══════════════════════════════════════════════════════════════════════════════
+ÍNDICES Y OPTIMIZACIÓN
+═══════════════════════════════════════════════════════════════════════════════
+
+Llaves Primarias:
+- Todas las tablas principales tienen PK con AUTO_INCREMENT
+- Tablas relacionales usan PK compuestas
+
+Llaves Foráneas:
+- Todas las relaciones implementan FK con integridad referencial
+- Configuradas con ON DELETE y ON UPDATE según reglas de negocio
+
+Índices Adicionales:
+- usuario.Correo: UNIQUE INDEX para evitar duplicados
+- Índices automáticos en todas las FK para mejorar JOINs
+
+═══════════════════════════════════════════════════════════════════════════════
+FIN DEL DICCIONARIO DE DATOS
+═══════════════════════════════════════════════════════════════════════════════

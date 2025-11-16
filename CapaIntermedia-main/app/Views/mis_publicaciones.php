@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="utf-8"/>
@@ -121,7 +121,7 @@ $media_src = 'data:' . $media_type . ';base64,' . base64_encode($pub['Multimedia
 </div>
 <div class="post-actions">
 <div class="action-buttons-group">
-<a href="comentarios_publi.php?id=<?php echo $pub['ID_Publi']; ?>" class="action-btn comment-btn"><i class="fas fa-comment"></i> Ver Comentarios</a>
+<a href="comentarios_publicacion.php?id=<?php echo $pub['ID_Publi']; ?>" class="action-btn comment-btn"><i class="fas fa-comment"></i> Ver Comentarios</a>
 <?php if ($pub['Estatus'] == 3): ?>
 <a href="editar_publicacion.php?id=<?php echo $pub['ID_Publi']; ?>" class="action-btn edit-btn"><i class="fas fa-edit"></i> Editar y Reenviar</a>
 <?php endif; ?>

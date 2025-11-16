@@ -192,3 +192,75 @@
     position: relative;
     z-index: 1;
 }
+/* Estilos para selects de países y nacionalidad */
+select.form_input {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"8\" viewBox=\"0 0 12 8\"><path fill=\"white\" d=\"M0 0l6 8 6-8z\"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    background-size: 12px;
+    padding-right: 40px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+select.form_input:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-bottom-color: rgba(255, 255, 255, 0.9);
+}
+
+select.form_input:focus {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-bottom-color: #4CAF50;
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+/* Opciones del select */
+select.form_input option {
+    background-color: #143E64;
+    color: white;
+    padding: 10px;
+    font-size: 15px;
+}
+
+select.form_input option:hover,
+select.form_input option:checked {
+    background: linear-gradient(135deg, #1976D2, #0d3e64);
+    color: #fff;
+}
+
+/* Label para los selects */
+.form_gruop label {
+    display: block;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+    margin-bottom: 8px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+/* Animación de carga para los selects */
+select.form_input[disabled] {
+    opacity: 0.6;
+    cursor: wait;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 0.6;
+    }
+    50% {
+        opacity: 0.8;
+    }
+}
+
+/* Estilo cuando está cargando */
+select.form_input option[value=\"\"]:only-child {
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.7);
+}

@@ -74,16 +74,28 @@ class AuthRepository
             }
         }
 
-        $ok = $stmt->execute();
+        // Suprimir advertencias de MySQL
+        mysqli_report(MYSQLI_REPORT_OFF);
+        $ok = @$stmt->execute();
         $errno = $this->db->errno;
+        $error_msg = $this->db->error;
+        mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+        
         $stmt->close();
         while ($this->db->more_results() && $this->db->next_result()) {;}
         
         if (!$ok) {
             if ($errno == 1062) {
-                throw new RuntimeException('El correo electrónico ya está registrado.');
+                // Error de entrada duplicada (correo ya existe)
+                if (strpos($error_msg, 'Correo') !== false) {
+                    throw new RuntimeException('Este correo electrónico ya está registrado. Por favor, usa otro correo o inicia sesión.');
+                } elseif (strpos($error_msg, 'Telefono') !== false) {
+                    throw new RuntimeException('Este número de teléfono ya está registrado. Por favor, usa otro número.');
+                } else {
+                    throw new RuntimeException('Los datos proporcionados ya están registrados en el sistema.');
+                }
             }
-            throw new RuntimeException('Error al registrar el usuario.');
+            throw new RuntimeException('Error al registrar el usuario. Por favor, intenta de nuevo.');
         }
         
         return true;

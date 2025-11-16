@@ -19,20 +19,36 @@ class ProfileEditController {
         $feedback_type = '';
 
         // Handle POST request to save changes
-        if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['save_changes'])) {
-            $nombre = $_POST['nombre'] ?? '';
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // Sanitizar inputs
+            $nombre = trim($_POST['nombre'] ?? '');
             $fechaNac = $_POST['fecha_nacimiento'] ?? '';
-            $genero = $_POST['genero'] ?? '';
-            $pais = $_POST['pais'] ?? '';
-            $nacionalidad = $_POST['nacionalidad'] ?? '';
-            $correo = $_POST['correo'] ?? '';
-            $telefono = $_POST['telefono'] ?? '';
+            $genero = trim($_POST['genero'] ?? '');
+            $pais = trim($_POST['pais'] ?? '');
+            $nacionalidad = trim($_POST['nacionalidad'] ?? '');
+            $correo = trim(strtolower($_POST['correo'] ?? ''));
+            $telefono = trim($_POST['telefono'] ?? '');
             $contrasena = $_POST['contrasena'] ?? '';
 
             // Validate required fields
             if (empty($nombre) || empty($fechaNac) || empty($genero) || empty($pais) || 
                 empty($nacionalidad) || empty($correo) || empty($telefono)) {
                 $feedback_message = "Por favor, completa todos los campos obligatorios";
+                $feedback_type = 'error';
+            }
+            // Validar formato email
+            elseif (!filter_var($correo, FILTER_VALIDATE_EMAIL)) {
+                $feedback_message = "El correo electrónico no es válido";
+                $feedback_type = 'error';
+            }
+            // Validar formato teléfono
+            elseif (!preg_match('/^[0-9]{10,15}$/', $telefono)) {
+                $feedback_message = "El teléfono debe contener entre 10 y 15 dígitos";
+                $feedback_type = 'error';
+            }
+            // Validar contraseña si se proporciona
+            elseif (!empty($contrasena) && (strlen($contrasena) < 8 || !preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/', $contrasena))) {
+                $feedback_message = "La contraseña debe tener al menos 8 caracteres e incluir mayúscula, minúscula, número y carácter especial";
                 $feedback_type = 'error';
             } else {
                 // Handle photo upload
@@ -71,10 +87,16 @@ class ProfileEditController {
         // Get user details for header
         $userDetails = $this->userRepo->getUserDetails($userId);
         
-        // Get user profile data for form
-        $userData = $this->userRepo->getUserProfileData($userId);
+        // Get user profile data for form (con edad calculada usando la función SQL)
+        $userData = $this->userRepo->getUserProfileWithAge($userId);
         if ($userData === null) {
             $userData = [];
+        }
+
+        // Obtener estadísticas del usuario usando V_EstadisticasPublicaciones
+        $userStats = $this->userRepo->getUserStatistics($userId);
+        if ($userStats === null) {
+            $userStats = [];
         }
 
         // Load view

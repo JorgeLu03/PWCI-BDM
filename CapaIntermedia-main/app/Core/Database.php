@@ -7,7 +7,7 @@ class Database
     {
         if (self::$conn === null) {
             $host = 'localhost';
-            $db   = 'bdmpwci2';
+            $db   = 'bdm-pwci2';
             $user = 'root';
             $pass = '';
 

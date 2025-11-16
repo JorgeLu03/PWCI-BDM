@@ -1,0 +1,330 @@
+╔════════════════════════════════════════════════════════════════╗
+║         ✅ ELEMENTOS SQL INTEGRADOS - RÚBRICA CUMPLIDA       ║
+╚════════════════════════════════════════════════════════════════╝
+
+📊 CUMPLIMIENTO DE RÚBRICA
+══════════════════════════════════════════════════════════════════
+✅ 8 VISTAS    (Requerido: mínimo 8) - CUMPLIDO
+✅ 2 FUNCIONES (Requerido: mínimo 2) - CUMPLIDO  
+✅ 2 TRIGGERS  (Requerido: mínimo 2) - CUMPLIDO
+
+⚠️  SIN FUNCIONALIDADES EXTRAS - Solo elementos SQL reutilizables
+
+══════════════════════════════════════════════════════════════════
+🔴 INSTALACIÓN RÁPIDA (Elige UNA opción)
+══════════════════════════════════════════════════════════════════
+
+OPCIÓN A - Importar Base de Datos Completa (Recomendado)
+----------------------------------------------------------
+1. Abre phpMyAdmin (http://localhost/phpmyadmin)
+2. Selecciona la base de datos: bdmpwci2
+3. Click en "Importar"
+4. Selecciona: app/Core/SQL_QUERY.sql
+5. Click "Continuar"
+
+OPCIÓN B - Solo Agregar Nuevas Funcionalidades
+----------------------------------------------------------
+1. Abre phpMyAdmin (http://localhost/phpmyadmin)
+2. Selecciona la base de datos: bdmpwci2
+3. Click en "SQL"
+4. Copia y pega el contenido de: app/Core/ACTUALIZAR_FUNCIONALIDADES.sql
+5. Click "Continuar"
+
+══════════════════════════════════════════════════════════════════
+✅ VERIFICACIÓN
+══════════════════════════════════════════════════════════════════
+
+En phpMyAdmin, verifica que existen:
+
+1. FUNCIONES (2):
+   - FN_CalcularEdadUsuario
+   - FN_ContarPublicacionesPorEstado
+
+2. TRIGGERS (2):
+   - TRG_ActualizarFechaAprobacion (en tabla publicacion)
+   - TRG_ValidarComentario (en tabla comentario)
+
+3. VISTAS (8):
+   - V_Categorias ✓ (existente)
+   - V_DetallesUsuario ✓ (existente)
+   - V_Mundiales ✓ (existente)
+   - V_Publicaciones ✓ (existente)
+   - V_EstadisticasPublicaciones ⭐ NUEVA
+   - V_ComentariosPublicacion ⭐ NUEVA
+   - V_PublicacionesConDetalles ⭐ NUEVA
+   - V_MundialesConEstadisticas ⭐ NUEVA
+
+══════════════════════════════════════════════════════════════════
+🧪 PRUEBAS SQL (Opcional)
+══════════════════════════════════════════════════════════════════
+
+Copia estos comandos en phpMyAdmin > SQL para probar:
+
+-- Probar función de edad
+SELECT FN_CalcularEdadUsuario(15) AS Edad;
+
+-- Probar contador de publicaciones aprobadas
+SELECT FN_ContarPublicacionesPorEstado(15, 2) AS Total_Aprobadas;
+
+-- Ver estadísticas de usuarios
+SELECT * FROM V_EstadisticasPublicaciones LIMIT 5;
+
+-- Ver comentarios con info de usuario
+SELECT * FROM V_ComentariosPublicacion WHERE ID_Publi = 12;
+
+-- Ver publicaciones con detalles completos
+SELECT Titulo, Nombre_Categoria, Nombre_Mundial, Nombre_Usuario 
+FROM V_PublicacionesConDetalles 
+WHERE Estatus = 2 
+LIMIT 10;
+
+-- Ver mundiales con conteo de publicaciones
+SELECT Nombre, Anio, Total_Publicaciones 
+FROM V_MundialesConEstadisticas 
+ORDER BY Anio DESC;
+
+-- Probar trigger de validación (debe fallar - contenido vacío)
+INSERT INTO comentario (Contenido, ID_User, ID_Publi) VALUES ('', 15, 12);
+
+-- Probar trigger de validación (debe funcionar)
+INSERT INTO comentario (Contenido, ID_User, ID_Publi) VALUES ('Buen post!', 15, 12);
+
+══════════════════════════════════════════════════════════════════
+📚 DOCUMENTACIÓN DETALLADA
+══════════════════════════════════════════════════════════════════
+
+Lee el archivo: NUEVAS_FUNCIONALIDADES.md
+Contiene explicaciones completas de:
+- Propósito de cada vista
+- Parámetros de cada función
+- Lógica de cada trigger
+- Ejemplos de integración en código existente
+
+══════════════════════════════════════════════════════════════════
+⚠️ NOTAS IMPORTANTES
+══════════════════════════════════════════════════════════════════
+
+1. Los TRIGGERS funcionan automáticamente - no los llames desde PHP
+2. Las FUNCIONES se pueden usar en SQL y desde PHP
+3. Las VISTAS simplifican queries - reemplazan JOINs complejos
+4. NO se agregaron páginas nuevas - solo elementos SQL reutilizables
+5. Asegúrate de tener XAMPP corriendo (Apache + MySQL)
+6. Si ves errores, revisa que el nombre de tu BD sea: bdmpwci2
+
+══════════════════════════════════════════════════════════════════
+💡 CÓMO USAR EN CÓDIGO EXISTENTE (Ejemplos)
+══════════════════════════════════════════════════════════════════
+
+Puedes simplificar queries existentes con las nuevas vistas:
+
+Ejemplo 1 - Comentarios de publicación:
+----------------------------------------
+ANTES:
+  SELECT c.*, u.Nombre, u.Foto 
+  FROM comentario c 
+  INNER JOIN usuario u ON c.ID_User = u.ID_User 
+  WHERE c.ID_Publi = ?
+
+AHORA:
+  SELECT * FROM V_ComentariosPublicacion WHERE ID_Publi = ?
+
+Ejemplo 2 - Publicaciones con detalles:
+----------------------------------------
+ANTES:
+  SELECT p.*, c.Nombre AS Cat, m.Nombre AS Mund, u.Nombre AS User
+  FROM publicacion p
+  INNER JOIN categoria c ON p.ID_Categ = c.ID_Categ
+  INNER JOIN mundial m ON p.ID_Mundial = m.ID_Mundial
+  INNER JOIN usuario u ON p.ID_User = u.ID_User
+  WHERE p.Estatus = 2
+
+AHORA:
+  SELECT * FROM V_PublicacionesConDetalles WHERE Estatus = 2
+
+Ejemplo 3 - Edad de usuario:
+----------------------------------------
+ANTES:
+  Calcular edad en PHP con DateTime
+
+AHORA:
+  SELECT FN_CalcularEdadUsuario(15) AS Edad
+
+══════════════════════════════════════════════════════════════════
+🎯 PARA LA RÚBRICA
+══════════════════════════════════════════════════════════════════
+
+Al presentar tu proyecto, muestra:
+
+1. El SQL_QUERY.sql con las 8 vistas, 2 funciones y 2 triggers
+2. En phpMyAdmin:
+   - Muestra las funciones (pestaña "Rutinas")
+   - Muestra los triggers (en tablas publicacion y comentario)
+   - Muestra las vistas (aparecen en lista de tablas)
+3. Ejecuta queries de prueba para demostrar que funcionan
+4. Este archivo de documentación
+
+VENTAJAS:
+- Cumple requisitos de rúbrica ✅
+- No agrega funcionalidades innecesarias ✅
+- Elementos SQL reutilizables ✅
+- Simplifica código existente ✅
+
+FECHA: 14 de Noviembre de 2025
+ESTADO: ✅ COMPLETADO - LISTO PARA ENTREGAR
+
+══════════════════════════════════════════════════════════════════
+
+
+📊 CUMPLIMIENTO DE RÚBRICA
+══════════════════════════════════════════════════════════════════
+✅ 8 VISTAS    (Requerido: mínimo 8) - CUMPLIDO
+✅ 2 FUNCIONES (Requerido: mínimo 2) - CUMPLIDO  
+✅ 2 TRIGGERS  (Requerido: mínimo 2) - CUMPLIDO
+
+══════════════════════════════════════════════════════════════════
+🔴 INSTALACIÓN RÁPIDA (Elige UNA opción)
+══════════════════════════════════════════════════════════════════
+
+OPCIÓN A - Importar Base de Datos Completa (Recomendado)
+----------------------------------------------------------
+1. Abre phpMyAdmin (http://localhost/phpmyadmin)
+2. Selecciona la base de datos: bdmpwci2
+3. Click en "Importar"
+4. Selecciona: app/Core/SQL_QUERY.sql
+5. Click "Continuar"
+
+OPCIÓN B - Solo Agregar Nuevas Funcionalidades
+----------------------------------------------------------
+1. Abre phpMyAdmin (http://localhost/phpmyadmin)
+2. Selecciona la base de datos: bdmpwci2
+3. Click en "SQL"
+4. Copia y pega el contenido de: app/Core/ACTUALIZAR_FUNCIONALIDADES.sql
+5. Click "Continuar"
+
+══════════════════════════════════════════════════════════════════
+✅ VERIFICACIÓN
+══════════════════════════════════════════════════════════════════
+
+En phpMyAdmin, verifica que existen:
+
+1. FUNCIONES (2):
+   - FN_CalcularEdadUsuario
+   - FN_ContarReaccionesPublicacion
+
+2. TRIGGERS (2):
+   - TRG_ActualizarFechaAprobacion (en tabla publicacion)
+   - TRG_ValidarComentario (en tabla comentario)
+
+3. VISTAS (8):
+   - V_Categorias
+   - V_DetallesUsuario  
+   - V_Mundiales
+   - V_Publicaciones
+   - V_EstadisticasPublicaciones ⭐ NUEVA
+   - V_ComentariosAprobados ⭐ NUEVA
+   - V_PublicacionesPopulares ⭐ NUEVA
+   - V_UsuariosActivos ⭐ NUEVA
+
+══════════════════════════════════════════════════════════════════
+🌐 PROBAR NUEVAS PÁGINAS
+══════════════════════════════════════════════════════════════════
+
+Accede a estas URLs en tu navegador:
+
+1. Publicaciones Populares:
+   http://localhost/BDM-PWCI/CapaIntermedia-main/public/publicaciones_populares.php
+
+2. Usuarios Activos:
+   http://localhost/BDM-PWCI/CapaIntermedia-main/public/usuarios_activos.php
+
+Los links también están disponibles en el menú lateral de inicio.php
+
+══════════════════════════════════════════════════════════════════
+🧪 PRUEBAS SQL (Opcional)
+══════════════════════════════════════════════════════════════════
+
+Copia estos comandos en phpMyAdmin > SQL para probar:
+
+-- Probar función de edad
+SELECT FN_CalcularEdadUsuario(15) AS Edad;
+
+-- Probar contador de likes
+SELECT FN_ContarReaccionesPublicacion(12, 'L') AS Total_Likes;
+
+-- Ver estadísticas de usuarios
+SELECT * FROM V_EstadisticasPublicaciones LIMIT 5;
+
+-- Ver usuarios más activos
+SELECT Nombre, Total_Publicaciones, Total_Comentarios, Puntuacion_Actividad 
+FROM V_UsuariosActivos 
+LIMIT 10;
+
+-- Ver publicaciones populares
+SELECT Titulo, Views, Total_Likes, Total_Comentarios 
+FROM V_PublicacionesPopulares 
+LIMIT 10;
+
+-- Probar trigger de validación (debe fallar)
+INSERT INTO comentario (Contenido, ID_User, ID_Publi) VALUES ('', 15, 12);
+
+-- Probar trigger de validación (debe funcionar)
+INSERT INTO comentario (Contenido, ID_User, ID_Publi) VALUES ('Buen post!', 15, 12);
+
+══════════════════════════════════════════════════════════════════
+📚 DOCUMENTACIÓN DETALLADA
+══════════════════════════════════════════════════════════════════
+
+Lee el archivo: NUEVAS_FUNCIONALIDADES.md
+Contiene explicaciones completas de:
+- Propósito de cada vista
+- Parámetros de cada función
+- Lógica de cada trigger
+- Métodos PHP correspondientes
+- Ejemplos de uso
+
+══════════════════════════════════════════════════════════════════
+⚠️ NOTAS IMPORTANTES
+══════════════════════════════════════════════════════════════════
+
+1. Los TRIGGERS funcionan automáticamente - no los llames desde PHP
+2. Las FUNCIONES se pueden usar en SQL y desde PHP
+3. Las VISTAS mejoran el rendimiento - son queries pre-optimizados
+4. Asegúrate de tener XAMPP corriendo (Apache + MySQL)
+5. Si ves errores, revisa que el nombre de tu BD sea: bdmpwci2
+
+══════════════════════════════════════════════════════════════════
+💡 INTEGRACIÓN EN PHP
+══════════════════════════════════════════════════════════════════
+
+Todos los elementos SQL están integrados en PHP:
+
+UserRepository:
+  - getUserStatistics($userId)        → V_EstadisticasPublicaciones
+  - getActiveUsers($limit)            → V_UsuariosActivos
+  - getUserAge($userId)               → FN_CalcularEdadUsuario
+
+PublicationRepository:
+  - getPopularPublications($limit)    → V_PublicacionesPopulares
+  - getApprovedComments($pubId)       → V_ComentariosAprobados
+  - getPublicationReactionCount(...)  → FN_ContarReaccionesPublicacion
+
+Triggers:
+  - Se ejecutan automáticamente en INSERT/UPDATE
+  - No requieren llamadas explícitas desde PHP
+
+══════════════════════════════════════════════════════════════════
+🎯 PARA LA RÚBRICA
+══════════════════════════════════════════════════════════════════
+
+Al presentar tu proyecto, muestra:
+
+1. El SQL_QUERY.sql con las 8 vistas, 2 funciones y 2 triggers
+2. Las páginas web funcionando (publicaciones_populares.php, usuarios_activos.php)
+3. Los métodos en PHP que usan las vistas/funciones
+4. Los triggers funcionando (inserta un comentario vacío para mostrar validación)
+5. Este archivo de documentación
+
+FECHA: 14 de Noviembre de 2025
+ESTADO: ✅ COMPLETADO - LISTO PARA ENTREGAR
+
+══════════════════════════════════════════════════════════════════

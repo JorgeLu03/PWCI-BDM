@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="utf-8"/>
@@ -55,16 +55,15 @@
 <aside class="sidebar left-sidebar" id="leftSidebar">
 <ul>
 <li><a href="inicio.php"><i class="fas fa-home"></i> <span>Inicio</span></a></li>
-<li><a href="mis_publicaciones.php"><i class="fa-solid fa-user"></i> <span>Perfil</span></a></li>
 <li><a href="crear_publicacion.php"><i class="fa-solid fa-upload"></i> <span>Publicar</span></a></li>
 <?php if (!isset($_SESSION['user_id'])): ?>
-<li><a href="Iniciar_sesion.php"><i class="fa-solid fa-right-to-bracket"></i> <span>Iniciar Sesión</span></a></li>
+<li><a href="iniciar_sesion.php"><i class="fa-solid fa-right-to-bracket"></i> <span>Iniciar Sesión</span></a></li>
 <?php endif; ?>
 <?php if ($userType === 0): ?>
-<li><a href="administrar_publis.php"><i class="fa-solid fa-user-tie"></i> <span>Administrar</span></a></li>
+<li><a href="administrar_publicaciones.php"><i class="fa-solid fa-user-tie"></i> <span>Administrar</span></a></li>
 <?php endif; ?>
 <li><a href="mundiales.php"><i class="fas fa-trophy"></i> <span>Mundiales</span></a></li>
-<li><a href="categorías.php"><i class="fa-solid fa-tags"></i> <span>Categorías</span></a></li>
+<li><a href="categorias.php"><i class="fa-solid fa-tags"></i> <span>Categorías</span></a></li>
 </ul>
 </aside>
 <main class="main-content">
@@ -75,7 +74,13 @@
 <?php foreach ($publications as $pub): 
     $idPubli = htmlspecialchars($pub['ID_Publi']);
     $titulo = htmlspecialchars($pub['Titulo']);
-    $descPlano = trim(preg_replace('/\s+/', ' ', strip_tags($pub['Descripcion'])));
+    // Decodificar entidades HTML
+    $descDecodificado = html_entity_decode($pub['Descripcion'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    // Convertir etiquetas de bloque en saltos de línea
+    $descConSaltos = preg_replace('/<\/(p|div|h[1-6]|li|br)>/i', "\n", $descDecodificado);
+    $descConSaltos = preg_replace('/<br\s*\/?>/i', "\n", $descConSaltos);
+    // Quitar etiquetas y normalizar espacios
+    $descPlano = trim(preg_replace('/\s+/', ' ', strip_tags($descConSaltos)));
     if (function_exists('mb_substr')) {
         $descripcionCortaTmp = mb_substr($descPlano, 0, 80);
         $descLen = function_exists('mb_strlen') ? mb_strlen($descPlano) : strlen($descPlano);
@@ -85,7 +90,7 @@
     }
     $descripcionCorta = htmlspecialchars($descripcionCortaTmp . ($descLen > 80 ? '...' : ''), ENT_QUOTES, 'UTF-8');
 ?>
-<a class="card-link" href="comentarios_publi.php?id=<?php echo $idPubli; ?>">
+<a class="card-link" href="comentarios_publicacion.php?id=<?php echo $idPubli; ?>">
 <article class="card publication-card">
 <div class="publication-card-media">
 <?php if (!empty($pub['Multimedia']) && !empty($pub['TipoMultimedia'])): ?>

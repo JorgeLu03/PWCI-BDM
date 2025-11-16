@@ -24,9 +24,10 @@ class HomeController
         // Determinar el filtro activo
         $sort_by = $_GET['sort'] ?? 'recent';
 
-        // Obtener las publicaciones según el filtro
+        // Obtener las publicaciones usando la nueva vista V_PublicacionesConDetalles
         try {
-            $publications = $this->pubRepo->getApprovedPublications($sort_by);
+            // Usar la vista que simplifica los JOINs
+            $publications = $this->pubRepo->getPublicationsWithDetails(2, $sort_by);
         } catch (Exception $e) {
             $publications = [];
             error_log("Error al obtener publicaciones: " . $e->getMessage());

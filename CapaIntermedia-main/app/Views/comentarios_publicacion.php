@@ -62,10 +62,12 @@
 <body>
 <header class="header">
 <div class="header-content">
+<a href="inicio.php" style="text-decoration: none; color: inherit;">
 <div class="logo-container">
 <div class="logo"><i class="fas fa-futbol"></i></div>
 <div><h1>GolNet </h1></div>
-</div><div class="header-center"><form action="buscar.php" class="header-search" method="GET"><input name="q" placeholder="Buscar..." type="search"/><button type="submit">Buscar</button></form></div>
+</div>
+</a><div class="header-center"><form action="buscar.php" class="header-search" method="GET"><input name="q" placeholder="Buscar..." type="search"/><button type="submit">Buscar</button></form></div>
 <?php if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])): ?>
 <div class="countdown">
 <a class="header-logout-icon-link" href="cerrar_sesion.php" title="Cerrar Sesión"><i class="fa-solid fa-right-from-bracket"></i></a>
@@ -205,7 +207,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => {
-                console.error('Error en la petición fetch:', error);
+
                 Swal.fire({
                     icon: 'error',
                     title: 'Error de Conexión',
@@ -256,7 +258,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => {
-                console.error('Error en la petición de comentario:', error);
+
                 Swal.fire({
                     icon: 'error',
                     title: 'Error de Conexión',
@@ -280,7 +282,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Función global simple para eliminar comentarios
+// Eliminar comentario
 function confirmarEliminacion(commentId) {
     Swal.fire({
         title: '¿Estás seguro?',
@@ -321,7 +323,7 @@ function confirmarEliminacion(commentId) {
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
+
                 Swal.fire('Error', 'No se pudo eliminar el comentario.', 'error');
             });
         }

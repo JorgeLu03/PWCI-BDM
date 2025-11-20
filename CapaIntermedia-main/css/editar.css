@@ -3,9 +3,8 @@
     width: 100%;
     max-width: 900px;
 }
-
 .login {
-    background: #143E64; /* Azul oscuro principal */
+    background: #143E64; 
     color: white;
     padding: 40px 30px;
     border-radius: 15px;
@@ -13,7 +12,6 @@
     position: relative;
     overflow: hidden;
 }
-
 .login::before {
     content: "";
     position: absolute;
@@ -28,19 +26,16 @@
 .form{
     font-weight: bold;
 }
-
 .profile-pic-section {
     display: flex;
     justify-content: center;
     margin-bottom: 20px;
 }
-
 .profile-pic-container {
     position: relative;
     width: 120px;
     height: 120px;
 }
-
 .profile-pic-container img {
     width: 100%;
     height: 100%;
@@ -49,7 +44,6 @@
     border: 3px solid white;
     box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
-
 .profile-pic-edit {
     position: absolute;
     bottom: 0;
@@ -66,23 +60,19 @@
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     transition: transform 0.2s ease;
 }
-
 .profile-pic-edit:hover {
     transform: scale(1.1);
 }
-
 .login .form_container {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 15px 30px; /* Espacio vertical y horizontal */
+    gap: 15px 30px; 
     align-items: end;
 }
-
 .form_gruop {
     position: relative;
     margin-bottom: 30px;
 }
-
 .form_input {
     width: 100%;
     padding: 14px 15px;
@@ -94,15 +84,12 @@
     font-size: 16px;
     transition: all 0.3s ease;
 }
-
 .form_input::placeholder {
     color: rgba(255, 255, 255, 0.7);
 }
-
 .form_input:focus {
     border-bottom-color: white;
 }
-
 .form_line {
     position: absolute;
     bottom: 0;
@@ -112,11 +99,9 @@
     background-color: white;
     transition: width 0.3s ease;
 }
-
 .form_input:focus~.form_line {
     width: 100%;
 }
-
 .form_gruop i {
     position: absolute;
     right: 15px;
@@ -124,25 +109,21 @@
     transform: translateY(-50%);
     color: rgba(255, 255, 255, 0.7);
 }
-
 .login p {
     text-align: right;
     margin-top: -15px;
     margin-bottom: 20px;
 }
-
 .login a {
     color: white;
     text-decoration: none;
     font-weight: 500;
     transition: all 0.3s ease;
 }
-
 .login a:hover {
     text-decoration: underline;
     color: #ffd700;
 }
-
 .form_submit {
     width: 100%;
     padding: 14px;
@@ -159,31 +140,25 @@
     position: relative;
     overflow: hidden;
 }
-
 .form_submit:hover {
     background: #f0f0f0;
     transform: translateY(-3px);
     box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
 }
-
 .form_submit.full-width {
-    grid-column: 1 / -1; /* Ocupa todo el ancho */
+    grid-column: 1 / -1; 
     margin-top: 20px;
 }
-
 .form_submit:active {
     transform: translateY(0);
 }
-
 .form_submit:nth-child(2) {
     background: #ffd700;
     color: #333;
 }
-
 .form_submit:nth-child(2):hover {
     background: #ffcc00;
 }
-
 .brand {
     text-align: center;
     margin-top: 30px;
@@ -192,7 +167,6 @@
     position: relative;
     z-index: 1;
 }
-/* Estilos para selects de países y nacionalidad */
 select.form_input {
     appearance: none;
     -webkit-appearance: none;
@@ -206,33 +180,26 @@ select.form_input {
     font-weight: 500;
     transition: all 0.3s ease;
 }
-
 select.form_input:hover {
     background-color: rgba(255, 255, 255, 0.05);
     border-bottom-color: rgba(255, 255, 255, 0.9);
 }
-
 select.form_input:focus {
     background-color: rgba(255, 255, 255, 0.1);
     border-bottom-color: #4CAF50;
     box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
 }
-
-/* Opciones del select */
 select.form_input option {
     background-color: #143E64;
     color: white;
     padding: 10px;
     font-size: 15px;
 }
-
 select.form_input option:hover,
 select.form_input option:checked {
     background: linear-gradient(135deg, #1976D2, #0d3e64);
     color: #fff;
 }
-
-/* Label para los selects */
 .form_gruop label {
     display: block;
     color: rgba(255, 255, 255, 0.9);
@@ -242,14 +209,11 @@ select.form_input option:checked {
     letter-spacing: 0.5px;
     text-transform: uppercase;
 }
-
-/* Animación de carga para los selects */
 select.form_input[disabled] {
     opacity: 0.6;
     cursor: wait;
     animation: pulse 1.5s ease-in-out infinite;
 }
-
 @keyframes pulse {
     0%, 100% {
         opacity: 0.6;
@@ -258,9 +222,48 @@ select.form_input[disabled] {
         opacity: 0.8;
     }
 }
-
-/* Estilo cuando está cargando */
 select.form_input option[value=\"\"]:only-child {
     font-style: italic;
     color: rgba(255, 255, 255, 0.7);
+}
+
+@media (max-width: 768px) {
+    .contenedor_principal {
+        max-width: 100%;
+        padding: 15px;
+    }
+    .login .form_container {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    .form_submit.full-width {
+        margin-top: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 10px;
+    }
+    .login {
+        padding: 25px 15px;
+    }
+    .profile-pic-container {
+        width: 100px;
+        height: 100px;
+    }
+    .form_gruop {
+        margin-bottom: 15px;
+    }
+    .form_input {
+        padding: 10px;
+        font-size: 14px;
+    }
+    .form_submit {
+        padding: 12px;
+        font-size: 14px;
+    }
+    select.form_input {
+        font-size: 14px;
+    }
 }

@@ -32,15 +32,19 @@
 <style data-injected="admin-delete-publication">
 .admin-delete-publication{position:absolute;top:10px;right:10px;width:36px;height:36px;border-radius:50%;background:rgba(220,53,69,.9);border:2px solid #fff;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;transition:all .3s ease;box-shadow:0 2px 8px rgba(0,0,0,.2)}
 .admin-delete-publication:hover{background:rgba(200,35,51,1);transform:scale(1.1);box-shadow:0 4px 12px rgba(220,53,69,.4)}
+.publication-card-media video{cursor:pointer;border-radius:8px}
+.publication-card-media video::-webkit-media-controls-panel{background-color:rgba(0,0,0,0.8)}
 </style>
 </head>
 <body>
 <header class="header">
 <div class="header-content">
+<a href="inicio.php" style="text-decoration: none; color: inherit;">
 <div class="logo-container">
 <div class="logo"><i class="fas fa-futbol"></i></div>
 <div><h1>GolNet </h1></div>
-</div><div class="header-center"><form action="buscar.php" class="header-search" method="GET"><input name="q" placeholder="Buscar..." type="search"/><button type="submit">Buscar</button></form></div>
+</div>
+</a><div class="header-center"><form action="buscar.php" class="header-search" method="GET"><input name="q" placeholder="Buscar..." type="search"/><button type="submit">Buscar</button></form></div>
 <?php if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])): ?>
 <div class="countdown">
 <a class="header-logout-icon-link" href="cerrar_sesion.php" title="Cerrar Sesión"><i class="fa-solid fa-right-from-bracket"></i></a>
@@ -84,12 +88,9 @@
 <?php foreach($publications as $row): 
     $idPubli = htmlspecialchars($row['ID_Publi']);
     $titulo = htmlspecialchars($row['Titulo']);
-    // Decodificar entidades HTML
     $descDecodificado = html_entity_decode($row['Descripcion'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
-    // Convertir etiquetas de bloque en saltos de línea
     $descConSaltos = preg_replace('/<\/(p|div|h[1-6]|li|br)>/i', "\n", $descDecodificado);
     $descConSaltos = preg_replace('/<br\s*\/?>/i', "\n", $descConSaltos);
-    // Quitar etiquetas y normalizar espacios
     $descripcionPlano = trim(preg_replace('/\s+/', ' ', strip_tags($descConSaltos)));
     if (function_exists('mb_substr')) {
         $descripcionCorta = mb_substr($descripcionPlano, 0, 80);
@@ -100,7 +101,7 @@
     }
     $descripcionCorta = htmlspecialchars($descripcionCorta . ($descLen > 80 ? '...' : ''), ENT_QUOTES, 'UTF-8');
     
-    // Verificar si el usuario puede eliminar (admin o dueño)
+    // Verificar si el usuario puede eliminar
     $canDelete = false;
     if (isset($_SESSION['user_id'])) {
         $canDelete = ($userType === 0) || ($row['ID_User'] == $_SESSION['user_id']);
@@ -121,12 +122,35 @@
 <?php if (!empty($row['Multimedia']) && !empty($row['TipoMultimedia'])): ?>
 <?php
 $media_type = $row['TipoMultimedia'];
+$media_size = strlen($row['Multimedia']);
 $media_src = 'data:' . $media_type . ';base64,' . base64_encode($row['Multimedia']);
 ?>
 <?php if (strpos($media_type, 'image/') === 0): ?>
-<img alt="<?php echo $titulo; ?>" src="<?php echo $media_src; ?>"/>
+<img alt="<?php echo $titulo; ?>" src="<?php echo $media_src; ?>" loading="lazy"/>
 <?php elseif (strpos($media_type, 'video/') === 0): ?>
-<video muted loop><source src="<?php echo $media_src; ?>" type="<?php echo $media_type; ?>"></video>
+<?php if ($media_size < 1024): ?>
+<div style="background:#ff6b6b; color:#fff; padding:20px; text-align:center; border-radius:8px;">
+  <i class="fas fa-exclamation-triangle" style="font-size:32px; margin-bottom:10px;"></i>
+  <p>Video muy pequeño o corrupto</p>
+  <small>Tamaño: <?php echo $media_size; ?> bytes<br>Tipo: <?php echo htmlspecialchars($media_type); ?></small>
+</div>
+<?php else: ?>
+
+<video controls style="width:100%;height:100%;object-fit:cover;background:#000;" 
+       onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+  <source src="<?php echo $media_src; ?>" type="<?php echo $media_type; ?>">
+  <p style="color:#fff; text-align:center; padding:20px;">Tu navegador no soporta este video</p>
+</video>
+<div style="display:none; background:#333; color:#fff; padding:20px; text-align:center; border-radius:8px;">
+  <i class="fas fa-video-slash" style="font-size:32px; margin-bottom:10px;"></i>
+  <p>No se pudo reproducir el video</p>
+  <small><?php echo htmlspecialchars($media_type); ?> - <?php echo round($media_size/1024/1024, 2); ?> MB</small>
+  <br><br>
+  <button onclick="this.parentElement.style.display='none'; this.parentElement.previousElementSibling.style.display='block';" style="background:#007bff; color:#fff; border:none; padding:8px 16px; border-radius:4px; cursor:pointer;">
+    Reintentar
+  </button>
+</div>
+<?php endif; ?>
 <?php endif; ?>
 <?php else: ?>
 <img alt="Sin multimedia" src="../css/PlaceHolder3.jpg"/>

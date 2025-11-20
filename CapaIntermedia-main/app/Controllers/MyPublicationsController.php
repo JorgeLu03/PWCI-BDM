@@ -14,7 +14,6 @@ class MyPublicationsController
 
     public function handle(): void
     {
-        // Restringir acceso a usuarios no logueados
         if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
             header('Location: Iniciar_sesion.php');
             exit();
@@ -22,19 +21,17 @@ class MyPublicationsController
 
         $userId = $_SESSION['user_id'];
         
-        // Obtener detalles del usuario con edad calculada
+        // Detalles de usuario
         $userDetails = $this->userRepo->getUserDetails($userId);
         $displayName = $userDetails['displayName'];
         $photoSrc = $userDetails['photoSrc'];
         $userType = $userDetails['userType'];
 
-        // Obtener estadísticas del usuario usando V_EstadisticasPublicaciones
         $userStats = $this->pubRepo->getUserPublicationStats($userId);
         
-        // También obtener edad usando la función FN_CalcularEdadUsuario
         $userAge = $this->userRepo->getUserAge($userId);
 
-        // Obtener publicaciones del usuario
+        // Publicaciones del usuario
         try {
             $user_publications = $this->pubRepo->getUserPublications($userId);
         } catch (Exception $e) {
@@ -42,7 +39,7 @@ class MyPublicationsController
             error_log("Error al obtener publicaciones del usuario: " . $e->getMessage());
         }
 
-        // Renderizar la vista
+        // Vista
         extract([
             'displayName' => $displayName,
             'photoSrc' => $photoSrc,

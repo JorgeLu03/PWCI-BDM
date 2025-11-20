@@ -1,6 +1,6 @@
 document.getElementById('mediaFile').addEventListener('change', function(event) {
     const previewContainer = document.getElementById('mediaPreview');
-    previewContainer.innerHTML = ''; // Limpiar previsualizaciones anteriores
+    previewContainer.innerHTML = ''; 
     const files = event.target.files;
 
     if (files.length > 0) {

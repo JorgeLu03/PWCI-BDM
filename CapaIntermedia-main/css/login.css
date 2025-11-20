@@ -4,10 +4,9 @@
     box-sizing: border-box;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
-
 body {
-    display: flex; /* Añadido para permitir el centrado */
-    min-height: 100vh; /* Asegura que el body ocupe toda la altura */
+    display: flex; 
+    min-height: 100vh; 
     justify-content: center;
     align-items: center;
     flex: 1;
@@ -15,21 +14,16 @@ body {
     background: rgba(234, 238, 255, 0.95);
     overflow-y: auto;
     position: relative;
-    /* Este es un fondo con patron de cuadritos */
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M20,20 L80,20 L80,80 L20,80 Z" fill="none" stroke="%230d3e64" stroke-width="1" opacity="0.1"/></svg>');
-    /* Aqui esta la imagen de fondo */
-    /* background-image: url(fondo_001.png);  */
 }
-
 .contenedor_principal {
     width: 100%;
-    max-width: 600px; /* Aumentamos el ancho del contenedor */
+    max-width: 600px; 
     animation: fadeIn 0.8s ease-out;
 }
-
 .login {
-    background: #143E64; /* Azul oscuro principal */
-    width: 100%; /* Hacemos que el formulario ocupe todo el contenedor */
+    background: #143E64; 
+    width: 100%; 
     color: white;
     padding: 40px 30px;
     border-radius: 15px;
@@ -37,7 +31,6 @@ body {
     position: relative;
     overflow: hidden;
 }
-
 .login::before {
     content: "";
     position: absolute;
@@ -49,7 +42,6 @@ body {
     opacity: 0.2;
     animation: rotate 25s linear infinite;
 }
-
 .publicacion_titulo {
     text-align: center;
     margin-bottom: 30px;
@@ -58,17 +50,14 @@ body {
     z-index: 1;
     text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
 }
-
 .form_container {
     position: relative;
     z-index: 1;
 }
-
 .form_gruop {
     position: relative;
     margin-bottom: 30px;
 }
-
 .form_input {
     width: 100%;
     padding: 14px 15px;
@@ -80,15 +69,12 @@ body {
     font-size: 16px;
     transition: all 0.3s ease;
 }
-
 .form_input::placeholder {
     color: rgba(255, 255, 255, 0.7);
 }
-
 .form_input:focus {
     border-bottom-color: white;
 }
-
 .form_line {
     position: absolute;
     bottom: 0;
@@ -98,11 +84,9 @@ body {
     background-color: white;
     transition: width 0.3s ease;
 }
-
 .form_input:focus~.form_line {
     width: 100%;
 }
-
 .form_gruop i {
     position: absolute;
     right: 15px;
@@ -110,25 +94,21 @@ body {
     transform: translateY(-50%);
     color: rgba(255, 255, 255, 0.7);
 }
-
 .login p {
     text-align: right;
     margin-top: -15px;
     margin-bottom: 20px;
 }
-
 .login a {
     color: white;
     text-decoration: none;
     font-weight: 500;
     transition: all 0.3s ease;
 }
-
 .login a:hover {
     text-decoration: underline;
     color: #ffd700;
 }
-
 .form_submit {
     width: 100%;
     padding: 14px;
@@ -145,26 +125,21 @@ body {
     position: relative;
     overflow: hidden;
 }
-
 .form_submit:hover {
     background: #f0f0f0;
     transform: translateY(-3px);
     box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
 }
-
 .form_submit:active {
     transform: translateY(0);
 }
-
 .form_submit:nth-child(2) {
     background: #ffd700;
     color: #333;
 }
-
 .form_submit:nth-child(2):hover {
     background: #ffcc00;
 }
-
 .brand {
     text-align: center;
     margin-top: 30px;
@@ -173,39 +148,31 @@ body {
     position: relative;
     z-index: 1;
 }
-
 @keyframes fadeIn {
     from {
         opacity: 0;
         transform: translateY(30px);
     }
-
     to {
         opacity: 1;
         transform: translateY(0);
     }
 }
-
 @keyframes rotate {
     from {
         transform: rotate(0deg);
     }
-
     to {
         transform: rotate(360deg);
     }
 }
-
-/* Estilos para la subida de imagen en registro.html */
 .file-upload-container {
     margin-top: 10px;
     text-align: center;
 }
-
 .file-upload-container .form_submit {
     margin-bottom: 15px;
 }
-
 .image-preview-container {
     margin-top: 15px;
     display: flex;
@@ -213,8 +180,6 @@ body {
     align-items: center;
     width: 100%;
 }
-
-/* Contenedor directo de la imagen */
 .preview-wrapper {
     width: 100%;
     max-width: 160px;
@@ -222,7 +187,6 @@ body {
     justify-content: center;
     align-items: center;
 }
-
 .image-preview-container img,
 .preview-wrapper img {
     display: block;
@@ -235,18 +199,14 @@ body {
     border: 3px solid rgba(255, 255, 255, 0.8);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
-
-/* Optional circular avatar style: add class "avatar" to img if you want a circular crop */
 .image-preview-container img.avatar {
     width: 120px;
     height: 120px;
     max-width: none;
     max-height: none;
     border-radius: 50%;
-    object-fit: cover; /* fill the circle (may crop) */
+    object-fit: cover; 
 }
-
-/* Estilos para la previsualización de imagen en registro.php */
 .image-preview-container #imagePreview {
     max-width: 160px;
     width: 100%;
@@ -257,8 +217,6 @@ body {
     border: 3px solid rgba(255, 255, 255, 0.8);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
-
-/* Estilos para selects de países y nacionalidad */
 select.form_input {
     appearance: none;
     -webkit-appearance: none;
@@ -272,33 +230,26 @@ select.form_input {
     font-weight: 500;
     transition: all 0.3s ease;
 }
-
 select.form_input:hover {
     background-color: rgba(255, 255, 255, 0.05);
     border-bottom-color: rgba(255, 255, 255, 0.9);
 }
-
 select.form_input:focus {
     background-color: rgba(255, 255, 255, 0.1);
     border-bottom-color: #4CAF50;
     box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
 }
-
-/* Opciones del select */
 select.form_input option {
     background-color: #143E64;
     color: white;
     padding: 10px;
     font-size: 15px;
 }
-
 select.form_input option:hover,
 select.form_input option:checked {
     background: linear-gradient(135deg, #1976D2, #0d3e64);
     color: #fff;
 }
-
-/* Label para los selects */
 .form_gruop label {
     display: block;
     color: rgba(255, 255, 255, 0.9);
@@ -308,14 +259,11 @@ select.form_input option:checked {
     letter-spacing: 0.5px;
     text-transform: uppercase;
 }
-
-/* Animación de carga para los selects */
 select.form_input[disabled] {
     opacity: 0.6;
     cursor: wait;
     animation: pulse 1.5s ease-in-out infinite;
 }
-
 @keyframes pulse {
     0%, 100% {
         opacity: 0.6;
@@ -324,27 +272,20 @@ select.form_input[disabled] {
         opacity: 0.8;
     }
 }
-
-/* Estilo cuando está cargando */
 select.form_input option[value=""]:only-child {
     font-style: italic;
     color: rgba(255, 255, 255, 0.7);
 }
-
-/* Validación de correo en tiempo real */
 input[type="email"].form_input.checking {
     border-bottom-color: #FFC107 !important;
     animation: checking 1s ease-in-out infinite;
 }
-
 input[type="email"].form_input.valid {
     border-bottom-color: #4CAF50 !important;
 }
-
 input[type="email"].form_input.invalid {
     border-bottom-color: #ff4444 !important;
 }
-
 @keyframes checking {
     0%, 100% {
         opacity: 1;
@@ -353,18 +294,51 @@ input[type="email"].form_input.invalid {
         opacity: 0.7;
     }
 }
-
-
 @media (max-width: 480px) {
+    body { padding: 10px; }
+    .login { padding: 25px 15px; border-radius: 12px; }
+    .publicacion_titulo { font-size: 22px; margin-bottom: 20px; }
+    .form_gruop { margin-bottom: 20px; }
+    .form_input { padding: 12px; font-size: 14px; }
+    .form_submit { padding: 12px; font-size: 15px; }
+    .brand { font-size: 12px; margin-top: 20px; }
+    .image-preview-container img, .preview-wrapper img { max-width: 120px; max-height: 120px; }
+    select.form_input { font-size: 14px; padding-right: 35px; }
+    .form_gruop label { font-size: 12px; }
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 15px;
+    }
+    .contenedor_principal {
+        max-width: 100%;
+    }
     .login {
-        padding: 30px 20px;
+        padding: 35px 25px;
     }
-
     .publicacion_titulo {
-        font-size: 24px;
+        font-size: 26px;
     }
-
     .form_input {
-        padding: 12px 15px;
+        padding: 13px 15px;
+        font-size: 15px;
+    }
+}
+
+@media (max-width: 360px) {
+    .login {
+        padding: 20px 12px;
+    }
+    .publicacion_titulo {
+        font-size: 20px;
+    }
+    .form_input {
+        padding: 10px;
+        font-size: 13px;
+    }
+    .form_submit {
+        padding: 10px;
+        font-size: 14px;
     }
 }

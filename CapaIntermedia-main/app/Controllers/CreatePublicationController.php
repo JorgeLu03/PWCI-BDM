@@ -23,7 +23,6 @@ class CreatePublicationController
         $user = $userRepo->getUserDetails($userId);
         $error_message = '';
 
-        // Manejo de alerta de éxito vía GET
         $show_success = isset($_GET['publicado']) && $_GET['publicado'] === 'exitoso';
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -32,7 +31,7 @@ class CreatePublicationController
             $idCateg = (int)($_POST['ID_categ'] ?? 0);
             $idMundial = (int)($_POST['ID_Mundial'] ?? 0);
 
-            $estatus = 1; // Pendiente
+            $estatus = 1;
             $views = 0;
             $fecAprob = null;
             $fecPub = date('Y-m-d');
@@ -40,11 +39,9 @@ class CreatePublicationController
             if (empty($titulo) || empty($descripcion) || empty($idCateg) || empty($idMundial)) {
                 $error_message = 'Por favor, completa el título, descripción, categoría y mundial.';
             }
-            // Validar longitud título (máximo 255 según BD)
             elseif (strlen($titulo) > 255) {
                 $error_message = 'El título no puede superar los 255 caracteres.';
             }
-            // Validar longitud descripción (máximo 65535 según BD TEXT)
             elseif (strlen($descripcion) > 65535) {
                 $error_message = 'La descripción es demasiado larga.';
             }
@@ -58,17 +55,23 @@ class CreatePublicationController
                     $mediaTmpPath = $_FILES['Multimedia']['tmp_name'] ?? null;
                     $mediaSize = $_FILES['Multimedia']['size'] ?? 0;
                     
-                    // Validar tipo MIME (imágenes y videos)
-                    $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/mpeg', 'video/quicktime'];
+                    // MIME
+                    $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo'];
                     if (!in_array($mediaType, $allowed_types)) {
-                        $error_message = 'Solo se permiten archivos de imagen (JPEG, PNG, GIF, WebP) o video (MP4, MPEG, MOV).';
+                        $error_message = 'Solo se permiten archivos de imagen (JPEG, PNG, GIF, WebP) o video (MP4, MPEG, MOV, AVI).';
                     }
-                    // Validar tamaño (máximo 50MB para videos, 10MB para imágenes)
-                    elseif (strpos($mediaType, 'video/') === 0 && $mediaSize > 50 * 1024 * 1024) {
-                        $error_message = 'Los videos no pueden superar los 50MB.';
+                    // Validación video válido
+                    elseif (strpos($mediaType, 'video/') === 0) {
+                        $fileInfo = finfo_open(FILEINFO_MIME_TYPE);
+                        $actualType = finfo_file($fileInfo, $mediaTmpPath);
+                        finfo_close($fileInfo);
+                        
+                        if (!str_contains($actualType, 'video/')) {
+                            $error_message = 'El archivo no es un video válido.';
+                        }
                     }
-                    elseif (strpos($mediaType, 'image/') === 0 && $mediaSize > 10 * 1024 * 1024) {
-                        $error_message = 'Las imágenes no pueden superar los 10MB.';
+                    if (strpos($mediaType, 'image/') === 0 && $mediaSize > 5 * 1024 * 1024) {
+                        $error_message = 'Las imágenes no pueden superar los 5MB para mejor rendimiento.';
                     }
                 }
                 
@@ -84,7 +87,7 @@ class CreatePublicationController
             }
         }
 
-        // Cargar datos para el formulario
+        // formulario
         $categorias = $catRepo->getCategorias();
         $mundiales = $catRepo->getMundiales();
 

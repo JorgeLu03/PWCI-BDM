@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- Control de barras laterales ---
     const menuToggle = document.getElementById('menuToggle');
     const leftSidebar = document.getElementById('leftSidebar');
 
@@ -9,7 +8,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Cerrar barras al hacer clic fuera de ellas en modo móvil
     document.addEventListener('click', (e) => {
         if (window.innerWidth <= 768) {
             const isClickInsideSidebar = leftSidebar && leftSidebar.contains(e.target);

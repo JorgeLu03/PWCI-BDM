@@ -10,13 +10,12 @@ class CommentApiController {
     public function handle() {
         header('Content-Type: application/json');
 
-        // Validate session
         if (!isset($_SESSION['user_id'])) {
             echo json_encode(['success' => false, 'error' => 'Debes iniciar sesión para poder comentar.']);
             exit();
         }
 
-        // Validate POST data
+        // Valid datos
         $userId = (int)$_SESSION['user_id'];
         $publiId = isset($_POST['publi_id']) ? (int)$_POST['publi_id'] : 0;
         $content = isset($_POST['content']) ? trim($_POST['content']) : '';
@@ -26,7 +25,7 @@ class CommentApiController {
             exit();
         }
 
-        // Add comment
+        // Poner comentario
         $success = $this->publicationRepo->addComment($content, $userId, $publiId);
 
         if ($success) {

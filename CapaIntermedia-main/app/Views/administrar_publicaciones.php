@@ -44,6 +44,7 @@
 <!-- Barra superior - Mundial 2026 -->
 <header class="header">
 <div class="header-content">
+<a href="inicio.php" style="text-decoration: none; color: inherit;">
 <div class="logo-container">
 <div class="logo">
 <i class="fas fa-futbol"></i>
@@ -51,7 +52,8 @@
 <div>
 <h1>GolNet </h1>
 </div>
-</div><div class="header-center"><form action="buscar.php" class="header-search" method="GET"><input name="q" placeholder="Buscar..." type="search"/><button type="submit">Buscar</button></form></div>
+</div>
+</a><div class="header-center"><form action="buscar.php" class="header-search" method="GET"><input name="q" placeholder="Buscar..." type="search"/><button type="submit">Buscar</button></form></div>
 <?php if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])): ?>
 <div class="countdown">
 <a class="header-logout-icon-link" href="cerrar_sesion.php" title="Cerrar Sesión"><i class="fa-solid fa-right-from-bracket"></i></a>
@@ -124,12 +126,28 @@
                             <div class="media-container">
                                 <?php
                                     $media_type = $pub['TipoMultimedia'];
+                                    $media_size = strlen($pub['Multimedia']);
                                     $media_src = 'data:' . $media_type . ';base64,' . base64_encode($pub['Multimedia']);
                                 ?>
+
                                 <?php if (strpos($media_type, 'image/') === 0): ?>
                                     <img alt="Multimedia" class="publish-media" src="<?php echo $media_src; ?>"/>
                                 <?php elseif (strpos($media_type, 'video/') === 0): ?>
-                                    <video class="publish-media" controls><source src="<?php echo $media_src; ?>" type="<?php echo $media_type; ?>"></video>
+                                    <?php if ($media_size < 1024): ?>
+                                        <div style="background:#ff6b6b; color:#fff; padding:15px; text-align:center; border-radius:8px;">
+                                            <i class="fas fa-exclamation-triangle"></i><br>
+                                            Video corrupto (<?php echo $media_size; ?> bytes)
+                                        </div>
+                                    <?php else: ?>
+                                        <video class="publish-media" controls style="background:#000;" 
+                                               onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                            <source src="<?php echo $media_src; ?>" type="<?php echo $media_type; ?>">
+                                        </video>
+                                        <div style="display:none; background:#333; color:#fff; padding:15px; text-align:center;">
+                                            Error: Video no compatible<br>
+                                            <small><?php echo $media_type; ?> - <?php echo round($media_size/1024/1024, 2); ?>MB</small>
+                                        </div>
+                                    <?php endif; ?>
                                 <?php endif; ?>
                             </div>
                         <?php endif; ?>
@@ -210,8 +228,12 @@
                         <input type="text" id="mundial-nombre" name="mundial_nombre" class="form-input-text" placeholder="Ej: Mundial 2026 - Norteamérica" required>
                     </div>
                     <div class="form-group">
-                        <label for="mundial-anio">Año</label>
-                        <input type="number" id="mundial-anio" name="mundial_anio" class="form-input-text" placeholder="Ej: 2026" required>
+                           <label for="mundial-anio">Año</label>
+                           <input type="number" id="mundial-anio" name="mundial_anio" class="form-input-text" 
+                               placeholder="Ej: 2026" 
+                               min="1930" 
+                               title="Ingrese el año del mundial"
+                               required>
                     </div>
                     <div class="form-group">
                         <label for="mundial-resena">Descripción</label>
@@ -289,6 +311,30 @@
                         </button>
                     </div>
                 </form>
+                
+                <script>
+                // Validación de años de mundiales
+                document.querySelector('form.admin-form').addEventListener('submit', function(e) {
+                    const anioInput = document.getElementById('mundial-anio');
+                    const anio = parseInt(anioInput.value);
+                    
+                    if (anio) {
+                        if (anio < 1930 || (anio - 1930) % 4 !== 0) {
+                            e.preventDefault();
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Año Inválido',
+                                text: 'El año ingresado no corresponde a un Mundial de la FIFA.',
+                                confirmButtonColor: '#d33'
+                            });
+                            anioInput.focus();
+                            return false;
+                        }
+                    }
+                });
+                
+
+                </script>
             </div>
         </div>
 
@@ -330,14 +376,14 @@ function setupImagePreview(inputId, previewId) {
 
     if (input && previewContainer) {
         input.addEventListener('change', function(event) {
-            previewContainer.innerHTML = ''; // Limpiar previsualización anterior
+            previewContainer.innerHTML = ''; 
             const file = event.target.files[0];
 
             if (file && file.type.startsWith('image/')) {
                 const img = document.createElement('img');
                 img.src = URL.createObjectURL(file);
                 img.onload = () => {
-                    URL.revokeObjectURL(img.src); // Liberar memoria
+                    URL.revokeObjectURL(img.src);
                 }
                 previewContainer.appendChild(img);
             }
@@ -369,12 +415,10 @@ document.addEventListener('DOMContentLoaded', function () {
         activeSection.style.display = 'block';
     }
 
-    // El estado inicial ya se establece con PHP, estos listeners son para los clics del usuario
     btnPublis.addEventListener('click', () => toggleSections(btnPublis, sectionPublis));
     btnComments.addEventListener('click', () => toggleSections(btnComments, sectionComments));
     btnCreate.addEventListener('click', () => toggleSections(btnCreate, sectionCreate));
 
-    // --- Lógica para aprobar/rechazar publicaciones ---
     document.querySelectorAll('.approve-btn, .reject-btn').forEach(button => {
         button.addEventListener('click', function() {
             const publiId = this.dataset.id;
@@ -403,7 +447,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         handlePublicationAction(publiId, action, result.value);
                     }
                 });
-            } else { // Para 'approve'
+            } else {
                 Swal.fire({
                     title: '¿Estás seguro?',
                     text: "Vas a APROBAR esta publicación y será visible para todos.",
@@ -422,7 +466,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // --- Lógica para aprobar/rechazar comentarios ---
+    // <--- Aprobar-rechazar comentarios-->
     document.querySelectorAll('.approve-comment-btn, .reject-comment-btn').forEach(button => {
         button.addEventListener('click', function() {
             const commentId = this.dataset.id;
@@ -442,7 +486,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         handleCommentAction(commentId, action);
                     }
                 });
-            } else { // Para 'reject'
+            } else {
                 Swal.fire({
                     title: '¿Rechazar Comentario?',
                     text: "El comentario será eliminado permanentemente. Esta acción no se puede deshacer.",
@@ -488,7 +532,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         })
         .catch(error => {
-            console.error('Error en la petición fetch:', error);
             Swal.fire('Error de Conexión', 'No se pudo comunicar con el servidor.', 'error');
         });
     }
@@ -524,7 +567,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         })
         .catch(error => {
-            console.error('Error en la petición fetch:', error);
             Swal.fire('Error de Conexión', 'No se pudo comunicar con el servidor.', 'error');
         });
     }

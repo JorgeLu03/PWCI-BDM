@@ -14,7 +14,6 @@ class PublicationDetailController
 
     public function handle(): void
     {
-        // Obtener ID de publicación
         $publi_id = $_GET['id'] ?? 0;
         
         if ($publi_id <= 0) {
@@ -22,7 +21,6 @@ class PublicationDetailController
             exit();
         }
 
-        // Obtener detalles del usuario (si está logueado)
         $current_user_id = $_SESSION['user_id'] ?? 0;
         $userId = $current_user_id > 0 ? $current_user_id : null;
         $userDetails = $this->userRepo->getUserDetails($userId);
@@ -30,7 +28,6 @@ class PublicationDetailController
         $photoSrc = $userDetails['photoSrc'];
         $userType = $userDetails['userType'];
 
-        // Obtener publicación con incremento de vistas
         try {
             $publication = $this->pubRepo->getPublicationDetail($publi_id);
             
@@ -39,11 +36,11 @@ class PublicationDetailController
                 exit();
             }
 
-            // Obtener likes y comentarios usando la nueva vista V_ComentariosPublicacion
+            // Obtener likes y comentarios
             $like_count = $this->pubRepo->getLikeCount($publi_id);
             $user_has_liked = $current_user_id > 0 ? $this->pubRepo->checkUserLike($current_user_id, $publi_id) : false;
             
-            // Usar la vista V_ComentariosPublicacion que incluye info del usuario
+            // Mostrar info del comentador
             $comments = $this->pubRepo->getCommentsWithUserInfo($publi_id, 2);
 
         } catch (Exception $e) {
@@ -52,7 +49,7 @@ class PublicationDetailController
             exit();
         }
 
-        // Renderizar la vista
+        // vista
         extract([
             'displayName' => $displayName,
             'photoSrc' => $photoSrc,

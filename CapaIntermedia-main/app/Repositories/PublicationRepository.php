@@ -33,10 +33,10 @@ class PublicationRepository
         $stmt->bind_param('issbsii', $pubId, $titulo, $descripcion, $nullBlob, $mediaType, $idCateg, $idMundial);
 
         if ($mediaTmpPath && is_file($mediaTmpPath)) {
-            $fp = fopen($mediaTmpPath, 'r');
+            $fp = fopen($mediaTmpPath, 'rb');
             if ($fp) {
                 while (!feof($fp)) {
-                    $chunk = fread($fp, 8192);
+                    $chunk = fread($fp, 65536);
                     $stmt->send_long_data(3, $chunk);
                 }
                 fclose($fp);
@@ -64,11 +64,11 @@ class PublicationRepository
         $stmt->bind_param('ssisssbsiii', $titulo, $descripcion, $estatus, $views, $fecAprob, $fecPub, $nullBlob, $mediaType, $idCateg, $idUser, $idMundial);
 
         if ($mediaTmpPath && is_file($mediaTmpPath)) {
-            $fp = fopen($mediaTmpPath, 'r');
+            $fp = fopen($mediaTmpPath, 'rb');
             if ($fp) {
                 while (!feof($fp)) {
-                    $chunk = fread($fp, 8192);
-                    $stmt->send_long_data(6, $chunk); // El 7º '?' (índice 6) es el BLOB
+                    $chunk = fread($fp, 65536);
+                    $stmt->send_long_data(6, $chunk);
                 }
                 fclose($fp);
             }
@@ -85,47 +85,7 @@ class PublicationRepository
         return true;
     }
 
-    /**
-     * Obtiene todas las publicaciones aprobadas ordenadas según el criterio
-     * @param string $sortBy 'recent', 'likes', o 'comments'
-     * @return array Lista de publicaciones
-     */
-    public function getApprovedPublications(string $sortBy = 'recent'): array
-    {
-        // Determinar qué procedimiento almacenado llamar
-        $sp = 'CALL SP_MostrarPublicaciones()';
-        if ($sortBy === 'likes') {
-            $sp = 'CALL SP_GetPostsByLikes()';
-        } elseif ($sortBy === 'comments') {
-            $sp = 'CALL SP_GetPostsByComments()';
-        }
-
-        $result = $this->db->query($sp);
-        if (!$result) {
-            throw new RuntimeException("Error al obtener publicaciones: " . $this->db->error);
-        }
-
-        $publications = [];
-        while ($row = $result->fetch_assoc()) {
-            $publications[] = $row;
-        }
-        $result->free();
-
-        // Limpia resultados adicionales
-        while ($this->db->more_results() && $this->db->next_result()) {
-            if ($res = $this->db->store_result()) {
-                $res->free();
-            }
-        }
-
-        return $publications;
-    }
-
-    /**
-     * Obtiene todas las publicaciones de un usuario específico
-     * @param int $userId ID del usuario
-     * @return array Lista de publicaciones del usuario
-     */
+    // Obtiene publicaciones un usuario
     public function getUserPublications(int $userId): array
     {
         $stmt = $this->db->prepare(
@@ -145,11 +105,6 @@ class PublicationRepository
         return $publications;
     }
 
-    /**
-     * Obtiene los detalles de una publicación específica e incrementa las vistas
-     * @param int $publiId ID de la publicación
-     * @return array|null Datos de la publicación o null si no existe
-     */
     public function getPublicationDetail(int $publiId): ?array
     {
         // Incrementar vistas
@@ -160,8 +115,6 @@ class PublicationRepository
             $stmt_views->close();
             while ($this->db->more_results() && $this->db->next_result()) {;}
         }
-
-        // Obtener detalles de la publicación usando el SP
         $stmt = $this->db->prepare("CALL SP_MostrarPublicacionEspecifica(?)");
         if (!$stmt) {
             throw new RuntimeException('Error al preparar SP_MostrarPublicacionEspecifica: ' . $this->db->error);
@@ -173,7 +126,6 @@ class PublicationRepository
         $stmt->close();
         while ($this->db->more_results() && $this->db->next_result()) {;}
         
-        // Agregar ID_Publi que el SP no retorna
         if ($publication !== null) {
             $publication['ID_Publi'] = $publiId;
         }
@@ -181,11 +133,6 @@ class PublicationRepository
         return $publication;
     }
 
-    /**
-     * Obtiene el conteo de likes de una publicación
-     * @param int $publiId ID de la publicación
-     * @return int Número de likes
-     */
     public function getLikeCount(int $publiId): int
     {
         $stmt = $this->db->prepare("CALL SP_GetLikeCount(?)");
@@ -201,12 +148,6 @@ class PublicationRepository
         return $like_count;
     }
 
-    /**
-     * Verifica si un usuario ha dado like a una publicación
-     * @param int $userId ID del usuario
-     * @param int $publiId ID de la publicación
-     * @return bool true si el usuario ya dio like
-     */
     public function checkUserLike(int $userId, int $publiId): bool
     {
         $stmt = $this->db->prepare("CALL SP_CheckUserLike(?, ?)");
@@ -222,30 +163,6 @@ class PublicationRepository
         return $user_liked;
     }
 
-    /**
-     * Obtiene los comentarios de una publicación
-     * @param int $publiId ID de la publicación
-     * @return array Lista de comentarios
-     */
-    public function getComments(int $publiId): array
-    {
-        $stmt = $this->db->prepare("CALL SP_GetCommentsByPost(?)");
-        if (!$stmt) {
-            throw new RuntimeException('Error al preparar SP_GetCommentsByPost: ' . $this->db->error);
-        }
-        $stmt->bind_param('i', $publiId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $comments = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
-        $stmt->close();
-        while ($this->db->more_results() && $this->db->next_result()) {;}
-        return $comments;
-    }
-
-    /**
-     * Obtiene todas las publicaciones pendientes de aprobación
-     * @return array Lista de publicaciones pendientes
-     */
     public function getPendingPublications(): array
     {
         $stmt = $this->db->prepare("CALL SP_GetPendingPublications()");
@@ -260,10 +177,6 @@ class PublicationRepository
         return $publications;
     }
 
-    /**
-     * Obtiene todos los comentarios pendientes de aprobación
-     * @return array Lista de comentarios pendientes
-     */
     public function getPendingComments(): array
     {
         $stmt = $this->db->prepare("CALL SP_GetPendingComments()");
@@ -278,11 +191,6 @@ class PublicationRepository
         return $comments;
     }
 
-    /**
-     * Busca publicaciones por término
-     * @param string $searchTerm Término de búsqueda
-     * @return array Lista de publicaciones encontradas
-     */
     public function searchPublications(string $searchTerm): array
     {
         $stmt = $this->db->prepare("CALL SP_SearchPublications(?)");
@@ -298,12 +206,6 @@ class PublicationRepository
         return $publications;
     }
 
-    /**
-     * Toggle like on a publication
-     * @param int $userId User ID
-     * @param int $publiId Publication ID
-     * @return string 'liked' or 'unliked'
-     */
     public function toggleLike(int $userId, int $publiId): string
     {
         $stmt = $this->db->prepare("CALL SP_ToggleLike(?, ?)");
@@ -319,13 +221,6 @@ class PublicationRepository
         return $status;
     }
 
-    /**
-     * Add a comment to a publication
-     * @param string $content Comment content
-     * @param int $userId User ID
-     * @param int $publiId Publication ID
-     * @return bool Success status
-     */
     public function addComment(string $content, int $userId, int $publiId): bool
     {
         $stmt = $this->db->prepare("CALL SP_AddComment(?, ?, ?)");
@@ -339,13 +234,6 @@ class PublicationRepository
         return $success;
     }
 
-    /**
-     * Update publication status (approve/reject)
-     * @param int $publiId Publication ID
-     * @param int $newStatus New status (2=approved, 3=rejected)
-     * @param string|null $reason Rejection reason
-     * @return bool Success status
-     */
     public function updatePublicationStatus(int $publiId, int $newStatus, ?string $reason): bool
     {
         $stmt = $this->db->prepare("CALL SP_UpdatePublicationStatus(?, ?, ?)");
@@ -359,12 +247,6 @@ class PublicationRepository
         return $success;
     }
 
-    /**
-     * Update comment status (approve/reject)
-     * @param int $commentId Comment ID
-     * @param int $newStatus New status (2=approved, 3=rejected)
-     * @return bool Success status
-     */
     public function updateCommentStatus(int $commentId, int $newStatus): bool
     {
         $stmt = $this->db->prepare("CALL SP_UpdateCommentStatus(?, ?)");
@@ -378,12 +260,6 @@ class PublicationRepository
         return $success;
     }
 
-    /**
-     * Delete a comment
-     * @param int $commentId Comment ID
-     * @param int $userId User ID (for verification)
-     * @return bool Success status
-     */
     public function deleteComment(int $commentId, int $userId): bool
     {
         $stmt = $this->db->prepare("CALL SP_DeleteCommentByAdmin(?)");
@@ -397,11 +273,6 @@ class PublicationRepository
         return $success;
     }
 
-    /**
-     * Get users who liked a publication
-     * @param int $publiId Publication ID
-     * @return array List of users
-     */
     public function getLikers(int $publiId): array
     {
         $stmt = $this->db->prepare("CALL SP_GetLikers(?)");
@@ -417,11 +288,6 @@ class PublicationRepository
         return $likers;
     }
 
-    /**
-     * Get users who commented on a publication
-     * @param int $publiId Publication ID
-     * @return array List of users
-     */
     public function getCommenters(int $publiId): array
     {
         $stmt = $this->db->prepare("CALL SP_GetCommenters(?)");
@@ -437,37 +303,6 @@ class PublicationRepository
         return $commenters;
     }
 
-    /**
-     * Toggle like on a comment
-     * @param int $userId User ID
-     * @param int $commentId Comment ID
-     * @return string 'liked' or 'unliked'
-     */
-    public function toggleCommentLike(int $userId, int $commentId): string
-    {
-        $stmt = $this->db->prepare("CALL SP_ToggleCommentLike(?, ?)");
-        if (!$stmt) {
-            return 'unliked';
-        }
-        $stmt->bind_param('ii', $userId, $commentId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $status = $result ? $result->fetch_assoc()['status'] : 'unliked';
-        $stmt->close();
-        while ($this->db->more_results() && $this->db->next_result()) {;}
-        return $status;
-    }
-
-    // ========== MÉTODOS QUE USAN LAS NUEVAS VISTAS Y FUNCIONES SQL ==========
-
-    /**
-     * Obtiene publicaciones con detalles completos usando V_PublicacionesConDetalles
-     * Simplifica los JOINs al traer publicaciones con categoría, mundial y usuario
-     * @param int $estatus Filtrar por estatus (1=Pendiente, 2=Aprobada, 3=Rechazada, 0=Todas)
-     * @param string $sortBy Ordenar por 'recent', 'likes', 'comments'
-     * @param int|null $limit Límite de resultados
-     * @return array Lista de publicaciones con detalles
-     */
     public function getPublicationsWithDetails(int $estatus = 2, string $sortBy = 'recent', ?int $limit = null): array
     {
         $sql = "SELECT ID_Publi, Titulo, Descripcion, Estatus, Views, Fec_aprob, Fec_pub, Multimedia, TipoMultimedia, MotivoRechazo, ID_Categ, Nombre_Categoria, ID_Mundial, Nombre_Mundial, Anio_Mundial, ID_User, Nombre_Usuario, Foto_Usuario, LikeCount, CommentCount FROM V_PublicacionesConDetalles";
@@ -489,7 +324,7 @@ class PublicationRepository
             case 'comments':
                 $sql .= " ORDER BY CommentCount DESC, Fec_pub DESC";
                 break;
-            default: // 'recent'
+            default: // 'reciente'
                 $sql .= " ORDER BY Fec_pub DESC";
         }
         
@@ -505,13 +340,6 @@ class PublicationRepository
         return $result->fetch_all(MYSQLI_ASSOC);
     }
 
-    /**
-     * Obtiene comentarios con información de usuario usando V_ComentariosPublicacion
-     * Reemplaza JOINs complejos para mostrar comentarios con datos del usuario
-     * @param int $publiId ID de la publicación
-     * @param int $estatusComentario Filtrar por estatus (1=Pendiente, 2=Aprobado, 0=Todos)
-     * @return array Lista de comentarios con información del usuario
-     */
     public function getCommentsWithUserInfo(int $publiId, int $estatusComentario = 2): array
     {
         $sql = "SELECT ID_Coment, Contenido, Fecha_Comentario, Estatus, ID_Publi, ID_User, Nombre_Usuario, Foto_Usuario FROM V_ComentariosPublicacion WHERE ID_Publi = ?";
@@ -541,11 +369,6 @@ class PublicationRepository
         return $comments;
     }
 
-    /**
-     * Obtiene estadísticas de publicaciones por usuario usando V_EstadisticasPublicaciones
-     * @param int $userId ID del usuario
-     * @return array|null Estadísticas del usuario (total publicaciones, aprobadas, pendientes, rechazadas, likes, comentarios)
-     */
     public function getUserPublicationStats(int $userId): ?array
     {
         $sql = "SELECT ID_User, Nombre_Usuario, Total_Publicaciones, Publicaciones_Aprobadas, Publicaciones_Pendientes, Publicaciones_Rechazadas, Total_Vistas, Promedio_Vistas FROM V_EstadisticasPublicaciones WHERE ID_User = ?";
@@ -564,11 +387,6 @@ class PublicationRepository
         return $stats;
     }
 
-    /**
-     * Obtiene el top de publicaciones más populares usando V_PublicacionesConDetalles
-     * @param int $limit Número de publicaciones a retornar
-     * @return array Top publicaciones ordenadas por likes y comentarios
-     */
     public function getTopPublications(int $limit = 10): array
     {
         $sql = "SELECT ID_Publi, Titulo, Descripcion, Estatus, Views, Fec_aprob, Fec_pub, Multimedia, TipoMultimedia, MotivoRechazo, ID_Categ, Nombre_Categoria, ID_Mundial, Nombre_Mundial, Anio_Mundial, ID_User, Nombre_Usuario, Foto_Usuario, LikeCount, CommentCount FROM V_PublicacionesConDetalles 
@@ -590,12 +408,6 @@ class PublicationRepository
         return $publications;
     }
 
-    /**
-     * Elimina una publicación completamente incluyendo comentarios, likes y vistas
-     * @param int $publicationId ID de la publicación a eliminar
-     * @return bool True si se eliminó correctamente
-     * @throws Exception Si error en BD
-     */
     public function deletePublicationComplete(int $publicationId): bool
     {
         $stmt = $this->db->prepare('CALL SP_DeletePublicationComplete(?)');

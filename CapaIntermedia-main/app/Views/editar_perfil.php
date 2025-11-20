@@ -50,6 +50,7 @@
 <!-- Barra superior -->
 <header class="header">
 <div class="header-content">
+<a href="inicio.php" style="text-decoration: none; color: inherit;">
 <div class="logo-container">
 <div class="logo">
 <i class="fas fa-futbol"></i>
@@ -58,6 +59,7 @@
 <h1>GolNet </h1>
 </div>
 </div>
+</a>
 <div class="header-center">
 <form action="buscar.php" class="header-search" method="GET">
 <input name="q" placeholder="Buscar..." type="search"/>

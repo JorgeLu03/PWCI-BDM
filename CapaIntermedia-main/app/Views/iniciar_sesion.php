@@ -6,6 +6,7 @@
     <title>Iniciar Sesion</title>
     <link rel="stylesheet" type="text/css" href="../css/inicio.css">
     <link rel="stylesheet" type="text/css" href="../css/login.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
     <main>
@@ -14,7 +15,17 @@
                 <form class="form" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" method="POST">
                     <h2 class="publicacion_titulo">Iniciar Sesión</h2>
                     <?php if (!empty($error_message)): ?>
-                        <p style="color: red; text-align: center;"><?php echo htmlspecialchars($error_message); ?></p>
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error de Inicio de Sesión',
+                                    text: '<?php echo addslashes($error_message); ?>',
+                                    confirmButtonColor: '#d33',
+                                    confirmButtonText: 'Entendido'
+                                });
+                            });
+                        </script>
                     <?php endif; ?>
                     <div class="form_container">
                         <div class="form_gruop">

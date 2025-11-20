@@ -21,7 +21,6 @@ class LoginController
             if (empty($usuario) || empty($contrasena)) {
                 $error_message = 'Por favor completa todos los campos.';
             }
-            // Validar longitud máxima para prevenir ataques
             elseif (strlen($usuario) > 100 || strlen($contrasena) > 255) {
                 $error_message = 'Credenciales inválidas.';
             } else {
@@ -44,7 +43,7 @@ class LoginController
             }
         }
 
-        // Renderizar vista
+        // vista
         extract(['error_message' => $error_message]);
         require __DIR__ . '/../Views/iniciar_sesion.php';
     }

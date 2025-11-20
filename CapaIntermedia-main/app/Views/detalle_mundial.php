@@ -53,10 +53,12 @@
 <!-- Barra superior -->
 <header class="header">
     <div class="header-content">
+        <a href="inicio.php" style="text-decoration: none; color: inherit;">
         <div class="logo-container">
             <div class="logo"><i class="fas fa-futbol"></i></div>
             <div><h1>GolNet</h1></div>
         </div>
+        </a>
         <div class="header-center">
             <form action="buscar.php" class="header-search" method="GET">
                 <input name="q" placeholder="Buscar..." type="search"/>
@@ -181,12 +183,9 @@
                         <?php
                             $idPubli = htmlspecialchars($pub['ID_Publi']);
                             $titulo = htmlspecialchars($pub['Titulo']);
-                            // Decodificar entidades HTML
                             $descDecodificado = html_entity_decode($pub['Descripcion'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
-                            // Convertir etiquetas de bloque en saltos de línea
                             $descConSaltos = preg_replace('/<\/(p|div|h[1-6]|li|br)>/i', "\n", $descDecodificado);
                             $descConSaltos = preg_replace('/<br\s*\/?>/i', "\n", $descConSaltos);
-                            // Quitar etiquetas y normalizar espacios
                             $descripcionPlano = trim(preg_replace('/\s+/', ' ', strip_tags($descConSaltos)));
                             if (function_exists('mb_substr')) {
                                 $descripcionCorta = mb_substr($descripcionPlano, 0, 80);

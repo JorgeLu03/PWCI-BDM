@@ -10,7 +10,7 @@ class CategoryListController {
     }
 
     public function handle() {
-        // Get user details if logged in
+        // Detalles del usuario
         $userDetails = null;
         $displayName = 'Mi Perfil';
         $photoSrc = '../css/PlaceHolder3.jpg';
@@ -22,10 +22,10 @@ class CategoryListController {
             extract($userDetails);
         }
         
-        // Get all categories
+        // Obtener categorías
         $categories = $this->catalogRepo->getCategorias();
 
-        // Load view
+        // Vista
         require __DIR__ . '/../Views/categorias.php';
     }
 }

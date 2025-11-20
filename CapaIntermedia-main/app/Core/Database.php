@@ -15,7 +15,6 @@ class Database
             if ($conn->connect_errno) {
                 die('Database connection error: ' . $conn->connect_error);
             }
-            // Opcional: set charset
             $conn->set_charset('utf8mb4');
             self::$conn = $conn;
         }

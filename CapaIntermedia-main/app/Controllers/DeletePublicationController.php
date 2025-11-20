@@ -10,13 +10,11 @@ class DeletePublicationController {
     }
 
     public function handle(): void {
-        // Verificar que sea una petición POST
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             echo json_encode(['success' => false, 'message' => 'Método no permitido']);
             return;
         }
 
-        // Verificar que el usuario esté logueado
         if (!isset($_SESSION['user_id'])) {
             echo json_encode(['success' => false, 'message' => 'Debes iniciar sesión']);
             return;

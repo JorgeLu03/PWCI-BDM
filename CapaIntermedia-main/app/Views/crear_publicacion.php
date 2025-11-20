@@ -1,4 +1,4 @@
-﻿<?php /* Vista: Crear Publicación (MVC) */ ?>
+﻿<?php ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -17,7 +17,9 @@
 <body>
 <header class="header">
     <div class="header-content">
+        <a href="inicio.php" style="text-decoration: none; color: inherit;">
         <div class="logo-container"><div class="logo"><i class="fas fa-futbol"></i></div><div><h1>GolNet</h1></div></div>
+        </a>
         <div class="header-center">
             <form action="buscar.php" class="header-search" method="GET">
                 <input name="q" placeholder="Buscar..." type="search"/>
@@ -109,7 +111,7 @@
   if(!textarea) return;
   ClassicEditor.create(textarea,{toolbar:{items:['heading','|','bold','italic','link','bulletedList','numberedList','|','undo','redo']}})
    .then(editor=>{editor.model.document.on('change:data',()=>{textarea.value = editor.getData();});})
-   .catch(err=>console.error('CKEditor error',err));
+   .catch(err=>{});
  });
 </script>
 <script src="../javascript/crear_publicacion.js"></script>

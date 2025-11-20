@@ -10,7 +10,6 @@ class GetLikersApiController {
     public function handle() {
         header('Content-Type: application/json');
 
-        // Validate GET parameter
         $publiId = isset($_GET['publi_id']) ? (int)$_GET['publi_id'] : 0;
 
         if ($publiId <= 0) {
@@ -18,7 +17,6 @@ class GetLikersApiController {
             exit();
         }
 
-        // Get likers
         $likers = $this->publicationRepo->getLikers($publiId);
 
         echo json_encode([

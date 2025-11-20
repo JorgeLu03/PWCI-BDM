@@ -14,14 +14,12 @@ class SearchController
 
     public function handle(): void
     {
-        // Obtener detalles del usuario
         $userId = $_SESSION['user_id'] ?? null;
         $userDetails = $this->userRepo->getUserDetails($userId);
         $displayName = $userDetails['displayName'];
         $photoSrc = $userDetails['photoSrc'];
         $userType = $userDetails['userType'];
 
-        // Obtener término de búsqueda
         $search_term = $_GET['q'] ?? '';
         $publications = [];
 
@@ -34,7 +32,7 @@ class SearchController
             }
         }
 
-        // Renderizar vista
+        // vista
         extract([
             'displayName' => $displayName,
             'photoSrc' => $photoSrc,

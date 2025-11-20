@@ -1,4 +1,4 @@
-﻿<?php /* Vista: Editar Publicación (MVC) */ ?>
+﻿<?php ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -17,7 +17,9 @@
 <body>
 <header class="header">
     <div class="header-content">
+        <a href="inicio.php" style="text-decoration: none; color: inherit;">
         <div class="logo-container"><div class="logo"><i class="fas fa-futbol"></i></div><div><h1>GolNet</h1></div></div>
+        </a>
         <div class="header-center">
             <form action="buscar.php" class="header-search" method="GET">
                 <input name="q" placeholder="Buscar..." type="search"/>
@@ -85,10 +87,9 @@
                 <label><i class="fas fa-image"></i> Multimedia (Opcional: selecciona un nuevo archivo)</label>
                 <div class="file-upload" id="uploadArea">
                     <button type="button" class="btn btn-upload" onclick="document.getElementById('mediaFile').click()"><i class="fa-solid fa-photo-film"></i> Cambiar archivo</button>
-                    <input type="file" id="mediaFile" name="Multimedia" class="file-input" accept="image/*,video/*">
+                    <input type="file" id="mediaFile" name="Multimedia" class="file-input" accept="image/*,video/*" onchange="updatePreview()">
                     <div class="media-preview" id="mediaPreview">
                         <?php if (!empty($pub_data['Multimedia'])): ?>
-                            <p>Multimedia actual:</p>
                             <?php
                                 $media_type = $pub_data['TipoMultimedia'];
                                 $media_src = 'data:' . $media_type . ';base64,' . base64_encode($pub_data['Multimedia']);
@@ -96,7 +97,9 @@
                             <?php if (strpos($media_type, 'image/') === 0): ?>
                                 <img src="<?php echo $media_src; ?>" style="max-width:200px;border-radius:8px;">
                             <?php elseif (strpos($media_type, 'video/') === 0): ?>
-                                <video src="<?php echo $media_src; ?>" style="max-width:200px;border-radius:8px;" controls></video>
+                                <video style="max-width:200px;border-radius:8px;" controls>
+                                    <source src="<?php echo $media_src; ?>" type="<?php echo $media_type; ?>">
+                                </video>
                             <?php endif; ?>
                         <?php endif; ?>
                     </div>
@@ -119,9 +122,55 @@
   if(!textarea) return;
   ClassicEditor.create(textarea,{toolbar:{items:['heading','|','bold','italic','link','bulletedList','numberedList','|','undo','redo']}})
    .then(editor=>{editor.model.document.on('change:data',()=>{textarea.value = editor.getData();});})
-   .catch(err=>console.error('CKEditor error',err));
+   .catch(err=>{});
  });
 </script>
 <script src="../javascript/inicio.js"></script>
 </body>
+<script>
+function updatePreview() {
+    const fileInput = document.getElementById('mediaFile');
+    const mediaPreview = document.getElementById('mediaPreview');
+    
+    if (fileInput.files && fileInput.files[0]) {
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        
+        // Validar tamaño del archivo
+        const maxSize = file.type.startsWith('image/') ? 5 * 1024 * 1024 : Infinity;
+        
+        if (file.size < 1024) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Archivo Corrupto',
+                text: 'El archivo parece estar corrupto (menor a 1KB)',
+                confirmButtonColor: '#d33'
+            });
+            fileInput.value = '';
+            return;
+        }
+        
+        if (file.size > maxSize && file.type.startsWith('image/')) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Archivo Muy Grande',
+                text: 'Las imágenes no pueden superar 5MB',
+                confirmButtonColor: '#d33'
+            });
+            fileInput.value = '';
+            return;
+        }
+        
+        reader.onload = function(e) {
+            if (file.type.startsWith('image/')) {
+                mediaPreview.innerHTML = '<img src="' + e.target.result + '" style="max-width:200px;border-radius:8px;">';
+            } else if (file.type.startsWith('video/')) {
+                mediaPreview.innerHTML = '<video src="' + e.target.result + '" style="max-width:200px;border-radius:8px;" controls preload="metadata"></video>';
+            }
+        };
+        
+        reader.readAsDataURL(file);
+    }
+}
+</script>
 </html>

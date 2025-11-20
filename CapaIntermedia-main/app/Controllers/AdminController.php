@@ -28,27 +28,24 @@ class AdminController
         $photoSrc = $userDetails['photoSrc'];
         $userType = $userDetails['userType'];
 
-        // Verificar que sea administrador
         if ($userType !== 0) {
             header('Location: inicio.php');
             exit();
         }
 
-        // Manejar mensajes de feedback
         $feedback_message = $_SESSION['feedback_message'] ?? '';
         $feedback_type = $_SESSION['feedback_type'] ?? '';
         unset($_SESSION['feedback_message'], $_SESSION['feedback_type']);
 
-        // Determinar pestaña activa
         $active_tab = $_GET['tab'] ?? 'publis';
 
-        // Manejar creación de categoría
+        // Creación de categoría
         if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['create_category'])) {
             $this->handleCreateCategory();
             return;
         }
 
-        // Manejar creación de mundial
+        // Creación de mundial
         if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['create_mundial'])) {
             $this->handleCreateMundial();
             return;
@@ -118,6 +115,17 @@ class AdminController
         $nombre = $_POST['mundial_nombre'] ?? '';
         $anio = $_POST['mundial_anio'] ?? '';
         $descripcion = $_POST['mundial_resena'] ?? '';
+        
+        // Validación año mundial
+        if (!empty($anio)) {
+            $anio_int = (int)$anio;
+            if ($anio_int < 1930 || ($anio_int - 1930) % 4 !== 0) {
+                $_SESSION['feedback_message'] = 'Error: Año inválido.';
+                $_SESSION['feedback_type'] = 'error';
+                header("Location: administrar_publicaciones.php?tab=create");
+                exit();
+            }
+        }
         $sedes = $_POST['mundial_sedes'] ?? '';
         $balon = $_POST['mundial_balon'] ?? '';
         $campeon = $_POST['mundial_campeon'] ?? '';
@@ -133,7 +141,7 @@ class AdminController
         $cantante = $_POST['mundial_cantante'] ?? null;
         $id_user = $_SESSION['user_id'] ?? 0;
 
-        // Cargar PlaceHolder3.jpg si no se proporciona logo o banner
+        // Imagen default
         $placeholder_path = __DIR__ . '/../../css/PlaceHolder3.jpg';
         $placeholder_data = file_exists($placeholder_path) ? file_get_contents($placeholder_path) : null;
 

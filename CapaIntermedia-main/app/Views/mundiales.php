@@ -61,6 +61,7 @@
 <!-- Barra superior -->
 <header class="header">
 <div class="header-content">
+<a href="inicio.php" style="text-decoration: none; color: inherit;">
 <div class="logo-container">
 <div class="logo">
 <i class="fas fa-futbol"></i>
@@ -69,6 +70,7 @@
 <h1>GolNet </h1>
 </div>
 </div>
+</a>
 <div class="header-center">
 <form action="buscar.php" class="header-search" method="GET">
 <input name="q" placeholder="Buscar..." type="search"/>
@@ -120,7 +122,7 @@
     <?php if (count($mundiales) > 0): ?>
         <?php foreach ($mundiales as $mundial): ?>
             <?php
-                // Determinar la fuente de la imagen del logo
+                // Imagen default
                 $logoSrc = '../css/PlaceHolder3.jpg';
                 if (!empty($mundial['Logo'])) {
                     $logoSrc = 'data:image/png;base64,' . base64_encode($mundial['Logo']);
@@ -163,7 +165,7 @@
 
 <script src="../javascript/inicio.js"></script>
 <script>
-// Manejar eliminación de mundiales (solo admin)
+// Eliminar mundial (admin)
 document.querySelectorAll('.admin-delete-mundial').forEach(button => {
     button.addEventListener('click', function(e) {
         e.preventDefault();
@@ -183,7 +185,6 @@ document.querySelectorAll('.admin-delete-mundial').forEach(button => {
             cancelButtonText: 'Cancelar'
         }).then((result) => {
             if (result.isConfirmed) {
-                // Mostrar loading
                 Swal.fire({
                     title: 'Eliminando...',
                     allowOutsideClick: false,
@@ -192,7 +193,6 @@ document.querySelectorAll('.admin-delete-mundial').forEach(button => {
                     }
                 });
                 
-                // Enviar petición al servidor
                 const formData = new FormData();
                 formData.append('mundial_id', mundialId);
                 

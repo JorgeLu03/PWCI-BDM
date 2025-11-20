@@ -91,29 +91,21 @@ class UserRepository
                 $nacionalidad
             );
             
-            // If there's photo data, send it as long data (BLOB handling)
             if ($fotoData !== null) {
-                // The 7th parameter (index 6) is the photo
+                // foto
                 $stmt->send_long_data(6, $fotoData);
             }
             
             $success = $stmt->execute();
             $stmt->close();
             
-            // Clean up stored procedure results
             while ($this->db->more_results() && $this->db->next_result()) {;}
         }
         
         return $success;
     }
 
-    // ========== MÉTODOS QUE USAN LAS NUEVAS FUNCIONES Y VISTAS SQL ==========
-
-    /**
-     * Calcula la edad de un usuario usando la función FN_CalcularEdadUsuario
-     * @param int $userId ID del usuario
-     * @return int|null Edad del usuario en años, o null si no se encuentra
-     */
+    // Calcular edad
     public function getUserAge(int $userId): ?int
     {
         $sql = "SELECT FN_CalcularEdadUsuario(?) AS edad";
@@ -137,12 +129,7 @@ class UserRepository
         return null;
     }
 
-    /**
-     * Cuenta las publicaciones de un usuario por estado usando FN_ContarPublicacionesPorEstado
-     * @param int $userId ID del usuario
-     * @param int $estatus Estado de las publicaciones (1=Pendiente, 2=Aprobada, 3=Rechazada)
-     * @return int Cantidad de publicaciones con ese estado
-     */
+    // Cuenta las publicaciones de un usuario
     public function countUserPublicationsByStatus(int $userId, int $estatus): int
     {
         $sql = "SELECT FN_ContarPublicacionesPorEstado(?, ?) AS total";
@@ -166,11 +153,6 @@ class UserRepository
         return 0;
     }
 
-    /**
-     * Obtiene estadísticas completas de un usuario usando V_EstadisticasPublicaciones
-     * @param int $userId ID del usuario
-     * @return array|null Array con estadísticas (Total_Publicaciones, Publicaciones_Aprobadas, etc.)
-     */
     public function getUserStatistics(int $userId): ?array
     {
         $sql = "SELECT ID_User, Nombre_Usuario, Total_Publicaciones, Publicaciones_Aprobadas, Publicaciones_Pendientes, Publicaciones_Rechazadas, Total_Vistas, Promedio_Vistas FROM V_EstadisticasPublicaciones WHERE ID_User = ?";
@@ -194,11 +176,7 @@ class UserRepository
         return null;
     }
 
-    /**
-     * Obtiene el perfil completo de un usuario con edad calculada
-     * @param int $userId ID del usuario
-     * @return array|null Datos del perfil incluyendo edad
-     */
+    // Obtener el perfil
     public function getUserProfileWithAge(int $userId): ?array
     {
         $profile = $this->getUserProfileData($userId);

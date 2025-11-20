@@ -8,12 +8,6 @@ class AuthRepository
         $this->db = $db;
     }
 
-    /**
-     * Intenta autenticar a un usuario
-     * @param string $username Usuario o correo
-     * @param string $password Contraseña
-     * @return array|null Datos del usuario si es exitoso, null si falla
-     */
     public function attemptLogin(string $username, string $password): ?array
     {
         $stmt = $this->db->prepare("CALL SP_InicSes(?, ?)");
@@ -31,20 +25,6 @@ class AuthRepository
         return $user;
     }
 
-    /**
-     * Registra un nuevo usuario
-     * @param string $correo
-     * @param string $telefono
-     * @param string $contrasena
-     * @param string $fechaNac
-     * @param bool $tipo_usuario
-     * @param string $nombre
-     * @param string|null $fotoTmpPath
-     * @param string $pais
-     * @param string $genero
-     * @param string $nacionalidad
-     * @return bool true si el registro fue exitoso
-     */
     public function registerUser(
         string $correo,
         string $telefono,
@@ -66,7 +46,7 @@ class AuthRepository
         $tipo_usuario_int = $tipo_usuario ? 1 : 0;
         $stmt->bind_param('ssssisbsss', $correo, $telefono, $contrasena, $fechaNac, $tipo_usuario_int, $nombre, $null, $pais, $genero, $nacionalidad);
         
-        // Enviar foto como BLOB si existe
+        // Enviar foto
         if ($fotoTmpPath && is_file($fotoTmpPath)) {
             $foto_data = file_get_contents($fotoTmpPath);
             if ($foto_data !== false) {
@@ -74,7 +54,6 @@ class AuthRepository
             }
         }
 
-        // Suprimir advertencias de MySQL
         mysqli_report(MYSQLI_REPORT_OFF);
         $ok = @$stmt->execute();
         $errno = $this->db->errno;
@@ -85,8 +64,8 @@ class AuthRepository
         while ($this->db->more_results() && $this->db->next_result()) {;}
         
         if (!$ok) {
+            // Entrada duplicada
             if ($errno == 1062) {
-                // Error de entrada duplicada (correo ya existe)
                 if (strpos($error_msg, 'Correo') !== false) {
                     throw new RuntimeException('Este correo electrónico ya está registrado. Por favor, usa otro correo o inicia sesión.');
                 } elseif (strpos($error_msg, 'Telefono') !== false) {

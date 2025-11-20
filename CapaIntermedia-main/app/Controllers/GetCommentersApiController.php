@@ -10,7 +10,6 @@ class GetCommentersApiController {
     public function handle() {
         header('Content-Type: application/json');
 
-        // Validate GET parameter
         $publiId = isset($_GET['publi_id']) ? (int)$_GET['publi_id'] : 0;
 
         if ($publiId <= 0) {
@@ -18,7 +17,6 @@ class GetCommentersApiController {
             exit();
         }
 
-        // Get commenters
         $commenters = $this->publicationRepo->getCommenters($publiId);
 
         echo json_encode([

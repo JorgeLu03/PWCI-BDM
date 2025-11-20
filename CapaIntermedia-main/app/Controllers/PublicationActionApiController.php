@@ -12,7 +12,6 @@ class PublicationActionApiController {
     public function handle() {
         header('Content-Type: application/json');
 
-        // Validate admin session
         if (!isset($_SESSION['user_id'])) {
             echo json_encode(['success' => false, 'error' => 'Usuario no autenticado.']);
             exit();
@@ -24,7 +23,6 @@ class PublicationActionApiController {
             exit();
         }
 
-        // Validate POST data
         $publiId = isset($_POST['publi_id']) ? (int)$_POST['publi_id'] : 0;
         $action = isset($_POST['action']) ? $_POST['action'] : '';
         $reason = isset($_POST['reason']) ? trim($_POST['reason']) : null;
@@ -39,10 +37,9 @@ class PublicationActionApiController {
             exit();
         }
 
-        // Determine new status: 2 = Approved, 3 = Rejected
         $newStatus = ($action === 'approve') ? 2 : 3;
 
-        // Update publication status
+        // Cambiar estatus -- JSON
         $success = $this->publicationRepo->updatePublicationStatus($publiId, $newStatus, $reason);
 
         if ($success) {

@@ -10,40 +10,37 @@ class CategoryFilterController {
     }
 
     public function handle() {
-        // Get user details if logged in
+        // Detalles del usuario
         $userDetails = null;
         if (isset($_SESSION['user_id'])) {
             $userId = $_SESSION['user_id'];
             $userDetails = $this->userRepo->getUserDetails($userId);
         }
         
-        // Get category ID and sort option from query parameters
+        // Obtiene ID categoría y la opción de filtro
         $category_id = intval($_GET['id'] ?? 0);
         $sort_by = $_GET['sort'] ?? 'recent';
 
-        // Validate sort option
         if (!in_array($sort_by, ['recent', 'likes', 'comments'])) {
             $sort_by = 'recent';
         }
 
-        // Get category details
+        // Obtiene detalles de categoría
         $category_details = $this->catalogRepo->getCategoryByID($category_id);
-        
-        // If category not found, show error
-        if ($category_details === null) {
+                if ($category_details === null) {
             die("Categoría no encontrada.");
         }
 
-        // Get publications for this category
+        // Obtener las publis del la categoría (con filtro)
         $publications = $this->catalogRepo->getPublicationsByCategory($category_id, $sort_by);
 
-        // Prepare category image
+        // Imagen default
         $categoryImageSrc = '../css/PlaceHolder3.jpg';
         if (!empty($category_details['Imagen'])) {
             $categoryImageSrc = 'data:image/jpeg;base64,' . base64_encode($category_details['Imagen']);
         }
 
-        // Load view
+        // Vista
         if ($userDetails) {
             extract($userDetails);
         }

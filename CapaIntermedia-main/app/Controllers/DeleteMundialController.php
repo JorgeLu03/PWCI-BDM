@@ -10,19 +10,16 @@ class DeleteMundialController {
     }
 
     public function handle(): void {
-        // Verificar que sea una petición POST
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             echo json_encode(['success' => false, 'message' => 'Método no permitido']);
             return;
         }
 
-        // Verificar que el usuario esté logueado
         if (!isset($_SESSION['user_id'])) {
             echo json_encode(['success' => false, 'message' => 'Debes iniciar sesión']);
             return;
         }
 
-        // Verificar que sea administrador
         $userDetails = $this->userRepo->getUserDetails($_SESSION['user_id']);
         if (!isset($userDetails['userType']) || $userDetails['userType'] !== 0) {
             echo json_encode(['success' => false, 'message' => 'No tienes permisos para esta acción']);

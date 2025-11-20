@@ -4,45 +4,42 @@ document.addEventListener('DOMContentLoaded', function() {
     const paisSelect = document.getElementById('pais_input');
     const nacionalidadSelect = document.getElementById('nacionalidad_input');
 
-    // Cargar países desde REST Countries API
+    // REST Countries API
     async function cargarPaisesEditar() {
     try {
-        console.log('Iniciando carga de países desde API...');
+
         const response = await fetch('https://restcountries.com/v3.1/all');
         
-        console.log('Respuesta recibida, status:', response.status);
+
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
         const paises = await response.json();
-        console.log('Datos parseados, total países:', paises.length);
+
         
         if (!Array.isArray(paises) || paises.length === 0) {
             throw new Error('La respuesta no contiene países válidos');
         }
         
-        // Ordenar países alfabéticamente por nombre en español
         paises.sort((a, b) => {
             const nombreA = a.translations?.spa?.common || a.name.common;
             const nombreB = b.translations?.spa?.common || b.name.common;
             return nombreA.localeCompare(nombreB);
         });
         
-        // Obtener valores actuales de los selects
         const paisActual = paisSelect.dataset.current;
         const nacionalidadActual = nacionalidadSelect.dataset.current;
         
-        // Limpiar opciones anteriores
         paisSelect.innerHTML = '<option value="">Selecciona tu país de nacimiento</option>';
         nacionalidadSelect.innerHTML = '<option value="">Selecciona tu nacionalidad</option>';
         
-        // Llenar ambos selects con los países
+        // Llenar con los países
         paises.forEach(pais => {
             const nombreEspanol = pais.translations?.spa?.common || pais.name.common;
             
-            // Agregar al select de país
+            // país
             const optionPais = document.createElement('option');
             optionPais.value = nombreEspanol;
             optionPais.textContent = nombreEspanol;
@@ -51,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             paisSelect.appendChild(optionPais);
             
-            // Agregar al select de nacionalidad
+            // nacionalidad
             const optionNac = document.createElement('option');
             optionNac.value = nombreEspanol;
             optionNac.textContent = nombreEspanol;
@@ -61,12 +58,10 @@ document.addEventListener('DOMContentLoaded', function() {
             nacionalidadSelect.appendChild(optionNac);
         });
         
-        console.log('✅ Países cargados exitosamente desde API para edición:', paises.length);
+
     } catch (error) {
-        console.error('❌ Error al cargar países desde API:', error);
-        console.warn('🔄 Usando lista de países completa como fallback...');
+
         
-        // Fallback con lista completa de países
         const paisesFallback = [
             'Afganistán', 'Albania', 'Alemania', 'Andorra', 'Angola', 'Antigua y Barbuda',
             'Arabia Saudita', 'Argelia', 'Argentina', 'Armenia', 'Australia', 'Austria',
@@ -123,11 +118,11 @@ document.addEventListener('DOMContentLoaded', function() {
             nacionalidadSelect.appendChild(optionNac);
         });
         
-        console.log('✅ Países del fallback cargados:', paisesFallback.length);
+
     }
 }
 
-    // Cargar países al iniciar
+    // Cargar países
     if (paisSelect && nacionalidadSelect) {
         cargarPaisesEditar();
     }

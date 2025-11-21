@@ -98,7 +98,7 @@
         </form>
     </div>
     <?php if (!empty($error_message)): ?>
-    <script>Swal.fire({icon:'error',title:'❌ Error al Publicar',text:<?php echo json_encode($error_message); ?>,confirmButtonColor:'#d33'});</script>
+    <script>Swal.fire({icon:'error',title:'Error al Publicar',text:<?php echo json_encode($error_message); ?>,confirmButtonColor:'#d33'});</script>
     <?php endif; ?>
     <?php if ($show_success): ?>
     <script>Swal.fire({icon:'info',title:'¡Publicación Enviada!',text:'Tu publicación ha sido enviada correctamente y está pendiente de revisión por el administrador.',confirmButtonColor:'#3085d6'});if(window.history.replaceState){window.history.replaceState(null,null,window.location.pathname);}</script>

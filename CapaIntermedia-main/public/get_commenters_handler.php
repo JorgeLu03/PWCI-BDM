@@ -1,11 +1,25 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 session_start();
 
-require_once '../app/Core/Database.php';
-require_once '../app/Repositories/PublicationRepository.php';
-require_once '../app/Controllers/GetCommentersApiController.php';
+header('Content-Type: application/json');
 
-$publicationRepository = new PublicationRepository(Database::getConnection());
-$controller = new GetCommentersApiController($publicationRepository);
-$controller->handle();
-?>
+try {
+    require_once '../app/Core/Database.php';
+    require_once '../app/Repositories/PublicationRepository.php';
+    require_once '../app/Controllers/GetCommentersApiController.php';
+    
+    $publicationRepository = new PublicationRepository(Database::getConnection());
+    $controller = new GetCommentersApiController($publicationRepository);
+    $controller->handle();
+    
+} catch (Throwable $e) {
+    echo json_encode([
+        'success' => false,
+        'error' => $e->getMessage(),
+        'file' => $e->getFile(),
+        'line' => $e->getLine()
+    ]);
+}

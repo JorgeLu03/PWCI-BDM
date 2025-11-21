@@ -70,7 +70,25 @@
 </ul>
 </aside>
 <main class="main-content">
-<h2>Mis Publicaciones </h2>
+<h2>Mis Publicaciones</h2>
+
+<!-- Panel de estadísticas rápidas -->
+<div style="display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap;">
+    <div style="background: rgba(40, 167, 69, 0.2); border-left: 2px solid #28a745; padding: 5px 10px; border-radius: 4px; display: inline-flex; align-items: center; gap: 6px;">
+        <span style="font-size: 0.7rem; color: #28a745; font-weight: 600;">Aprobadas:</span>
+        <span style="font-size: 0.95rem; font-weight: bold; color: #28a745;"><?php echo $approvedCount; ?></span>
+    </div>
+    <div style="background: rgba(255, 193, 7, 0.2); border-left: 2px solid #ffc107; padding: 5px 10px; border-radius: 4px; display: inline-flex; align-items: center; gap: 6px;">
+        <span style="font-size: 0.7rem; color: #ffc107; font-weight: 600;">Pendientes:</span>
+        <span style="font-size: 0.95rem; font-weight: bold; color: #ffc107;"><?php echo $pendingCount; ?></span>
+    </div>
+    
+    <div style="background: rgba(220, 53, 69, 0.2); border-left: 2px solid #dc3545; padding: 5px 10px; border-radius: 4px; display: inline-flex; align-items: center; gap: 6px;">
+        <span style="font-size: 0.7rem; color: #dc3545; font-weight: 600;">Rechazadas:</span>
+        <span style="font-size: 0.95rem; font-weight: bold; color: #dc3545;"><?php echo $rejectedCount; ?></span>
+    </div>
+</div>
+
 <?php if (count($user_publications) > 0): ?>
 <?php foreach ($user_publications as $pub): ?>
 <div class="worldcup-container">
@@ -159,12 +177,30 @@ document.addEventListener('DOMContentLoaded', function() {
             const title = action === 'likers' ? 'Personas a las que les gusta' : 'Personas que comentaron';
 
             fetch(`${handler}?publi_id=${publiId}`)
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.text();
+                })
+                .then(text => {
+                    console.log('Raw response:', text);
+                    try {
+                        return JSON.parse(text);
+                    } catch (e) {
+                        console.error('JSON parse error:', e);
+                        console.error('Response text:', text);
+                        throw new Error('La respuesta del servidor no es JSON válido');
+                    }
+                })
                 .then(data => {
                     if (data.success) {
+                        // Obtener usuarios desde likers o commenters según el action
+                        const users = action === 'likers' ? data.likers : data.commenters;
+                        
                         let userListHTML = '<div style="text-align: left; max-height: 400px; overflow-y: auto;">';
-                        if (data.users.length > 0) {
-                            data.users.forEach(user => {
+                        if (users && users.length > 0) {
+                            users.forEach(user => {
                                 const photoSrc = user.Foto 
                                     ? 'data:image/jpeg;base64,' + user.Foto 
                                     : '../css/user-default.png';
@@ -192,8 +228,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 })
                 .catch(error => {
-
-                    Swal.fire('Error de Conexión', 'No se pudo comunicar con el servidor.', 'error');
+                    console.error('Error completo:', error);
+                    Swal.fire('Error de Conexión', error.message || 'No se pudo comunicar con el servidor.', 'error');
                 });
         });
     });

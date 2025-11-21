@@ -103,7 +103,9 @@
 <ul>
 <li><a href="inicio.php"><i class="fas fa-home"></i> <span>Inicio</span></a></li>
 <li><a href="crear_publicacion.php"><i class="fa-solid fa-upload"></i> <span>Publicar</span></a></li>
+<?php if (!isset($_SESSION['user_id'])): ?>
 <li><a href="iniciar_sesion.php"><i class="fa-solid fa-right-to-bracket"></i> <span>Iniciar Sesión</span></a></li>
+<?php endif; ?>
 <?php if (isset($userType) && $userType === 0): ?>
 <li><a href="administrar_publicaciones.php"><i class="fa-solid fa-user-tie"></i> <span>Administrar</span></a></li>
 <?php endif; ?>

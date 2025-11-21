@@ -31,6 +31,11 @@ class MyPublicationsController
         
         $userAge = $this->userRepo->getUserAge($userId);
 
+        // Contadores por estado
+        $pendingCount = $this->userRepo->countUserPublicationsByStatus($userId, 1);
+        $approvedCount = $this->userRepo->countUserPublicationsByStatus($userId, 2);
+        $rejectedCount = $this->userRepo->countUserPublicationsByStatus($userId, 3);
+
         // Publicaciones del usuario
         try {
             $user_publications = $this->pubRepo->getUserPublications($userId);
@@ -46,7 +51,10 @@ class MyPublicationsController
             'userType' => $userType,
             'user_publications' => $user_publications,
             'userStats' => $userStats,
-            'userAge' => $userAge
+            'userAge' => $userAge,
+            'pendingCount' => $pendingCount,
+            'approvedCount' => $approvedCount,
+            'rejectedCount' => $rejectedCount
         ]);
         require __DIR__ . '/../Views/mis_publicaciones.php';
     }

@@ -275,7 +275,7 @@ class PublicationRepository
 
     public function getLikers(int $publiId): array
     {
-        $stmt = $this->db->prepare("CALL SP_GetLikers(?)");
+        $stmt = $this->db->prepare("CALL SP_GetLikersByPost(?)");
         if (!$stmt) {
             return [];
         }
@@ -290,7 +290,7 @@ class PublicationRepository
 
     public function getCommenters(int $publiId): array
     {
-        $stmt = $this->db->prepare("CALL SP_GetCommenters(?)");
+        $stmt = $this->db->prepare("CALL SP_GetCommentersByPost(?)");
         if (!$stmt) {
             return [];
         }

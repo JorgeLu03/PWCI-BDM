@@ -88,20 +88,16 @@ class PublicationRepository
     // Obtiene publicaciones un usuario
     public function getUserPublications(int $userId): array
     {
-        $stmt = $this->db->prepare(
-            "SELECT ID_Publi, Titulo, Descripcion, Fec_pub, Multimedia, TipoMultimedia, Views, LikeCount, CommentCount, Estatus, MotivoRechazo
-             FROM V_Publicaciones 
-             WHERE ID_User = ? 
-             ORDER BY Fec_pub DESC"
-        );
+        $stmt = $this->db->prepare('CALL SP_GetUserPublications(?)');
         if (!$stmt) {
-            throw new RuntimeException('Error al preparar consulta de publicaciones del usuario: ' . $this->db->error);
+            throw new RuntimeException('Error al preparar SP_GetUserPublications: ' . $this->db->error);
         }
         $stmt->bind_param('i', $userId);
         $stmt->execute();
         $result = $stmt->get_result();
-        $publications = $result->fetch_all(MYSQLI_ASSOC);
+        $publications = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
         $stmt->close();
+        while ($this->db->more_results() && $this->db->next_result()) {;}
         return $publications;
     }
 
@@ -305,106 +301,61 @@ class PublicationRepository
 
     public function getPublicationsWithDetails(int $estatus = 2, string $sortBy = 'recent', ?int $limit = null): array
     {
-        $sql = "SELECT ID_Publi, Titulo, Descripcion, Estatus, Views, Fec_aprob, Fec_pub, Multimedia, TipoMultimedia, MotivoRechazo, ID_Categ, Nombre_Categoria, ID_Mundial, Nombre_Mundial, Anio_Mundial, ID_User, Nombre_Usuario, Foto_Usuario, LikeCount, CommentCount FROM V_PublicacionesConDetalles";
-        $conditions = [];
-        
-        if ($estatus > 0) {
-            $conditions[] = "Estatus = $estatus";
+        $stmt = $this->db->prepare('CALL SP_GetPublicationsWithDetails(?, ?, ?)');
+        if (!$stmt) {
+            throw new RuntimeException('Error al preparar SP_GetPublicationsWithDetails: ' . $this->db->error);
         }
-        
-        if (!empty($conditions)) {
-            $sql .= " WHERE " . implode(' AND ', $conditions);
-        }
-        
-        // Ordenamiento
-        switch ($sortBy) {
-            case 'likes':
-                $sql .= " ORDER BY LikeCount DESC, Fec_pub DESC";
-                break;
-            case 'comments':
-                $sql .= " ORDER BY CommentCount DESC, Fec_pub DESC";
-                break;
-            default: // 'reciente'
-                $sql .= " ORDER BY Fec_pub DESC";
-        }
-        
-        if ($limit !== null && $limit > 0) {
-            $sql .= " LIMIT $limit";
-        }
-        
-        $result = $this->db->query($sql);
-        if (!$result) {
-            throw new RuntimeException("Error al obtener publicaciones con detalles: " . $this->db->error);
-        }
-        
-        return $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->bind_param('isi', $estatus, $sortBy, $limit);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $publications = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+        $stmt->close();
+        while ($this->db->more_results() && $this->db->next_result()) {;}
+        return $publications;
     }
 
     public function getCommentsWithUserInfo(int $publiId, int $estatusComentario = 2): array
     {
-        $sql = "SELECT ID_Coment, Contenido, Fecha_Comentario, Estatus, ID_Publi, ID_User, Nombre_Usuario, Foto_Usuario FROM V_ComentariosPublicacion WHERE ID_Publi = ?";
-        
-        if ($estatusComentario > 0) {
-            $sql .= " AND Estatus = ?";
-        }
-        
-        $sql .= " ORDER BY Fecha_Comentario DESC";
-        
-        $stmt = $this->db->prepare($sql);
+        $stmt = $this->db->prepare('CALL SP_GetCommentsWithUserInfo(?, ?)');
         if (!$stmt) {
-            throw new RuntimeException('Error al preparar consulta de comentarios: ' . $this->db->error);
+            throw new RuntimeException('Error al preparar SP_GetCommentsWithUserInfo: ' . $this->db->error);
         }
-        
-        if ($estatusComentario > 0) {
-            $stmt->bind_param('ii', $publiId, $estatusComentario);
-        } else {
-            $stmt->bind_param('i', $publiId);
-        }
-        
+        $stmt->bind_param('ii', $publiId, $estatusComentario);
         $stmt->execute();
         $result = $stmt->get_result();
-        $comments = $result->fetch_all(MYSQLI_ASSOC);
+        $comments = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
         $stmt->close();
-        
+        while ($this->db->more_results() && $this->db->next_result()) {;}
         return $comments;
     }
 
     public function getUserPublicationStats(int $userId): ?array
     {
-        $sql = "SELECT ID_User, Nombre_Usuario, Total_Publicaciones, Publicaciones_Aprobadas, Publicaciones_Pendientes, Publicaciones_Rechazadas, Total_Vistas, Promedio_Vistas FROM V_EstadisticasPublicaciones WHERE ID_User = ?";
-        $stmt = $this->db->prepare($sql);
-        
+        $stmt = $this->db->prepare('CALL SP_GetUserPublicationStats(?)');
         if (!$stmt) {
-            throw new RuntimeException('Error al preparar consulta de estadísticas: ' . $this->db->error);
+            throw new RuntimeException('Error al preparar SP_GetUserPublicationStats: ' . $this->db->error);
         }
-        
         $stmt->bind_param('i', $userId);
         $stmt->execute();
         $result = $stmt->get_result();
         $stats = ($result && $result->num_rows > 0) ? $result->fetch_assoc() : null;
         $stmt->close();
-        
+        while ($this->db->more_results() && $this->db->next_result()) {;}
         return $stats;
     }
 
     public function getTopPublications(int $limit = 10): array
     {
-        $sql = "SELECT ID_Publi, Titulo, Descripcion, Estatus, Views, Fec_aprob, Fec_pub, Multimedia, TipoMultimedia, MotivoRechazo, ID_Categ, Nombre_Categoria, ID_Mundial, Nombre_Mundial, Anio_Mundial, ID_User, Nombre_Usuario, Foto_Usuario, LikeCount, CommentCount FROM V_PublicacionesConDetalles 
-                WHERE Estatus = 2 
-                ORDER BY (LikeCount + CommentCount) DESC, Fec_pub DESC 
-                LIMIT ?";
-        
-        $stmt = $this->db->prepare($sql);
+        $stmt = $this->db->prepare('CALL SP_GetTopPublications(?)');
         if (!$stmt) {
-            throw new RuntimeException('Error al preparar consulta de top publicaciones: ' . $this->db->error);
+            throw new RuntimeException('Error al preparar SP_GetTopPublications: ' . $this->db->error);
         }
-        
         $stmt->bind_param('i', $limit);
         $stmt->execute();
         $result = $stmt->get_result();
-        $publications = $result->fetch_all(MYSQLI_ASSOC);
+        $publications = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
         $stmt->close();
-        
+        while ($this->db->more_results() && $this->db->next_result()) {;}
         return $publications;
     }
 

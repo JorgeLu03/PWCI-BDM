@@ -46,17 +46,16 @@ class UserRepository
 
     public function getUserProfileData(int $userId): ?array
     {
-        $sql = 'SELECT ID_User, Nombre, Fec_nac, Genero, Pais_de_nac, Nacionalidad, Correo, Telefono, Foto FROM V_DetallesUsuario WHERE ID_User = ?';
-        $out = null;
-        if ($stmt = $this->db->prepare($sql)) {
-            $stmt->bind_param('i', $userId);
-            $stmt->execute();
-            $res = $stmt->get_result();
-            if ($res && $res->num_rows === 1) {
-                $out = $res->fetch_assoc();
-            }
-            $stmt->close();
+        $stmt = $this->db->prepare('CALL SP_GetUserData(?)');
+        if (!$stmt) {
+            throw new RuntimeException('Error al preparar SP_GetUserData: ' . $this->db->error);
         }
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        $out = ($res && $res->num_rows === 1) ? $res->fetch_assoc() : null;
+        $stmt->close();
+        while ($this->db->more_results() && $this->db->next_result()) {;}
         return $out;
     }
 
@@ -108,13 +107,10 @@ class UserRepository
     // Calcular edad
     public function getUserAge(int $userId): ?int
     {
-        $sql = "SELECT FN_CalcularEdadUsuario(?) AS edad";
-        $stmt = $this->db->prepare($sql);
-        
+        $stmt = $this->db->prepare('CALL SP_GetUserAge(?)');
         if (!$stmt) {
-            throw new RuntimeException('Error al preparar consulta de edad: ' . $this->db->error);
+            throw new RuntimeException('Error al preparar SP_GetUserAge: ' . $this->db->error);
         }
-        
         $stmt->bind_param('i', $userId);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -122,6 +118,7 @@ class UserRepository
         if ($result && $result->num_rows > 0) {
             $row = $result->fetch_assoc();
             $stmt->close();
+            while ($this->db->more_results() && $this->db->next_result()) {;}
             return $row['edad'] !== null ? (int)$row['edad'] : null;
         }
         
@@ -132,13 +129,10 @@ class UserRepository
     // Cuenta las publicaciones de un usuario
     public function countUserPublicationsByStatus(int $userId, int $estatus): int
     {
-        $sql = "SELECT FN_ContarPublicacionesPorEstado(?, ?) AS total";
-        $stmt = $this->db->prepare($sql);
-        
+        $stmt = $this->db->prepare('CALL SP_CountUserPublicationsByStatus(?, ?)');
         if (!$stmt) {
-            throw new RuntimeException('Error al preparar consulta de conteo: ' . $this->db->error);
+            throw new RuntimeException('Error al preparar SP_CountUserPublicationsByStatus: ' . $this->db->error);
         }
-        
         $stmt->bind_param('ii', $userId, $estatus);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -146,6 +140,7 @@ class UserRepository
         if ($result && $result->num_rows > 0) {
             $row = $result->fetch_assoc();
             $stmt->close();
+            while ($this->db->more_results() && $this->db->next_result()) {;}
             return (int)$row['total'];
         }
         
@@ -155,13 +150,10 @@ class UserRepository
 
     public function getUserStatistics(int $userId): ?array
     {
-        $sql = "SELECT ID_User, Nombre_Usuario, Total_Publicaciones, Publicaciones_Aprobadas, Publicaciones_Pendientes, Publicaciones_Rechazadas, Total_Vistas, Promedio_Vistas FROM V_EstadisticasPublicaciones WHERE ID_User = ?";
-        $stmt = $this->db->prepare($sql);
-        
+        $stmt = $this->db->prepare('CALL SP_GetUserStatistics(?)');
         if (!$stmt) {
-            throw new RuntimeException('Error al preparar consulta de estadísticas: ' . $this->db->error);
+            throw new RuntimeException('Error al preparar SP_GetUserStatistics: ' . $this->db->error);
         }
-        
         $stmt->bind_param('i', $userId);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -169,10 +161,12 @@ class UserRepository
         if ($result && $result->num_rows > 0) {
             $stats = $result->fetch_assoc();
             $stmt->close();
+            while ($this->db->more_results() && $this->db->next_result()) {;}
             return $stats;
         }
         
         $stmt->close();
+        while ($this->db->more_results() && $this->db->next_result()) {;}
         return null;
     }
 

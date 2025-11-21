@@ -99,34 +99,31 @@ class CatalogRepository
 
     public function getWorldCupsWithStats(): array
     {
-        $sql = 'SELECT ID_Mundial, Nombre, Anio, Sede, Campeon, Subcampeon, TercerLugar, CuartoLugar, Descripcion, Logo, Banner, Balon, Fec_Final, Lugar_Final, Marcador_Final, TiempoExtra_Final, Goleador, Alineacion_Campeon, Cantante, Views, ID_User, Total_Publicaciones FROM V_MundialesConEstadisticas ORDER BY Anio DESC';
-        $out = [];
-        
-        $result = $this->db->query($sql);
-        if ($result) {
-            $out = $result->fetch_all(MYSQLI_ASSOC);
-            $result->free();
+        $stmt = $this->db->prepare('CALL SP_GetWorldCupsWithStats()');
+        if (!$stmt) {
+            throw new RuntimeException('Error al preparar SP_GetWorldCupsWithStats: ' . $this->db->error);
         }
-        
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $out = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+        $stmt->close();
+        while ($this->db->more_results() && $this->db->next_result()) {;}
         return $out;
     }
 
     // Obtiene mundial específico
     public function getWorldCupWithStats(int $mundialId): ?array
     {
-        $sql = 'SELECT ID_Mundial, Nombre, Anio, Sede, Campeon, Subcampeon, TercerLugar, CuartoLugar, Descripcion, Logo, Banner, Balon, Fec_Final, Lugar_Final, Marcador_Final, TiempoExtra_Final, Goleador, Alineacion_Campeon, Cantante, Views, ID_User, Total_Publicaciones FROM V_MundialesConEstadisticas WHERE ID_Mundial = ?';
-        $out = null;
-        
-        if ($stmt = $this->db->prepare($sql)) {
-            $stmt->bind_param('i', $mundialId);
-            $stmt->execute();
-            $res = $stmt->get_result();
-            if ($res && $res->num_rows > 0) {
-                $out = $res->fetch_assoc();
-            }
-            $stmt->close();
+        $stmt = $this->db->prepare('CALL SP_GetWorldCupWithStats(?)');
+        if (!$stmt) {
+            throw new RuntimeException('Error al preparar SP_GetWorldCupWithStats: ' . $this->db->error);
         }
-        
+        $stmt->bind_param('i', $mundialId);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        $out = ($res && $res->num_rows > 0) ? $res->fetch_assoc() : null;
+        $stmt->close();
+        while ($this->db->more_results() && $this->db->next_result()) {;}
         return $out;
     }
 
